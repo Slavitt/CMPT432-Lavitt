@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "None",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "ignoreDeprecations": "5.0"
+  },
+  "include": [
+    "src/**/*"
+  ]
+}

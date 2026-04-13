@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hello World</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #f0f0f0;
+      padding: 1rem;
+    }
+
+    h1 {
+      font-size: 3rem;
+      color: #333;
+      margin-bottom: 1rem;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 1rem;
+      width: 80%;
+      height: 50vh;
+    }
+
+    textarea {
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      font-family: Arial, sans-serif;
+      border: 2px solid #ccc;
+      border-radius: 6px;
+      flex: 1;
+      outline: none;
+      resize: none;
+    }
+
+    textarea:focus {
+      border-color: #4a90e2;
+    }
+
+    textarea[readonly] {
+      background-color: #e9e9e9;
+      color: #555;
+      cursor: not-allowed;
+    }
+
+    button {
+      margin-top: 1rem;
+      padding: 0.75rem 2rem;
+      font-size: 1rem;
+      background-color: #4a90e2;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #357abd;
+    }
+  </style>
+</head>
+<body>
+  <h1>Hello World</h1>
+  <div class="input-row">
+    <textarea id="alert-input" placeholder="Type something..."></textarea>
+    <textarea id="alert-output" placeholder="Output will appear here..." readonly></textarea>
+  </div>
+  <button id="hello-btn">Show Alert</button>
+  <script src="dist/main.js"></script>
+</body>
+</html>
