@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hello World</title>
+  <title>Sam's Compiler (Name TBD)</title>
   <style>
     * {
       box-sizing: border-box;
@@ -75,12 +75,15 @@
   </style>
 </head>
 <body>
-  <h1>Hello World</h1>
+  <h1>Sam's Compiler (Name TBD)</h1>
   <div class="input-row">
     <textarea id="alert-input" placeholder="Type something..."></textarea>
     <textarea id="alert-output" placeholder="Output will appear here..." readonly></textarea>
   </div>
-  <button id="hello-btn">Show Alert</button>
-  <script src="dist/main.js"></script>
+  <button id="hello-btn">Compile</button>
+  
+
+  <script type="module" src="dist/lexer.js"></script>
+  <script type="module" src="dist/main.js"></script>
 </body>
 </html>
