@@ -9,11 +9,22 @@ function startCompilation() {
         output.value += "\n";
     }
     output.value += "Starting compilation...\n";
-    output.value += "LEXER - begin lex\n";
+    output.value += "LEXER - begin lex --------------------\n";
     let newLexer = new Lexer();
     let lexTest = newLexer.generateTokens(message);
-    output.value += lexTest;
-    output.value += "\nLEXER - lex complete";
+    for (let i = 0; i < lexTest.length; i++) {
+        output.value += `\nLEX - ${lexTest[i].type} [  ${lexTest[i].value} ] found at (${lexTest[i].line},${lexTest[i].index})`;
+    }
+    if (newLexer.warningStream.length > 0) {
+        for (let i = 0; i < newLexer.warningStream.length; i++) {
+            output.value += `\n${newLexer.warningStream[i]}`;
+        }
+    }
+    output.value += "\nLEXER - lex complete-----------------";
+    if (newLexer.errorStream.length > 0) {
+        // do not move on to parse
+        // list errors
+    }
     output.scrollTop = output.scrollHeight;
 }
 function init() {
