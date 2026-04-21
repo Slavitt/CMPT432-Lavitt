@@ -1,25 +1,17 @@
 import { Token } from "./Token.js";
 
 /* REMEMBER TO DO THIS
-- Implement a Warning class and an Error class.
-    - Both should include the message and the coordinates of where the Warning or Error took place.
-- String handling
-    - start by identifying the open quote
-    - while pos < length of program:
-        - check for end of string first
-        - make sure the next character is either a lowercase letter or a number
-            - if yes, make an id token for that letter or a digit token for that number and advance
-            - if no, push an error onto the error stack and advance
-    - if the program ends, throw a warning onto the stack for an unterminated quote AND unterminated program
-- Digit handling
-    - if char in [0-9], create a digit token and advance
-- EOP handling
-- ADD TOKENS FOR OPEN COMMENT AND CLOSE COMMENT
+
 - ID handling and keywords [COME BACK TO THIS LATER]
     - create temp array for holding tokens
     - create string to hold
     - add currentChar into array
     - compare it to the
+
+- ID Handling and Keywords
+    - create temp array for holding tokens
+    - create string to hold chars (INSTANCE VARIABLE FOR LEXER)
+    - 
 */
 
 export class Lexer
@@ -28,20 +20,19 @@ export class Lexer
     errorStream: String[] = [];
     warningStream: String[] = [];
 
+    pos: number = 0;
+    index: number = 1;
+
     constructor() { }
 
     generateTokens(input: string): Token[]
     {
         console.log("hello from lexer.ts");
-        console.log("test");
         let program = input + " ";
 
         // Variables -----------------
-
-        let pos: number = 0;
-        // token position is as follows: [line:index]
         let line: number = 1;
-        let index: number = 1;
+
 
         // Tokens, Errors and Warnings
         let tokenStream: Token[] = [];
@@ -49,19 +40,20 @@ export class Lexer
         let warningStream: String[] = [];
 
         // Dictionaries (courtesy of Aidan Carr, slightly modified by me)
-        let tokenList = ["int",           "string",        "boolean",       "while", "if",  "false",     "true",   "print", "a",  "b",  "c",  "d",  "e",  "f",  "g",  "h",  "i",  "j",  "k",  "l",  "m",  "n",  "o",  "p",  "q",  "r",  "s",  "t",  "u",  "v",  "w",  "x",  "y",  "z", "+",      "=",     "==",      "!=",       "\"",       "(",       ")",       "{",       "}",       "/*",          "*/",         "$",    "0",     "1",     "2",      "3",    "4",     "5",     "6",     "7",     "8",     "9"];
-        let types =    ["VARIABLE TYPE", "VARIABLE TYPE", "VARIABLE TYPE", "WHILE", "IF", "BOOL_VAL", "BOOL_VAL", "PRINT", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ADD", "ASSIGN", "BOOL_OP", "BOOL_OP", "QUOTE", "O-PAREN", "C-PAREN", "O-BRACE", "C-BRACE",  "OPEN COMMENT", "CLOSE COMMENT", "EOP", "DIGIT", "DIGIT", "DIGIT", "DIGIT", "DIGIT", "DIGIT", "DIGIT", "DIGIT", "DIGIT", "DIGIT"];
+        let tokenList = ["int",           "string",        "boolean",       "while", "if",  "false",     "true",   "print", "a",  "b",  "c",  "d",  "e",  "f",  "g",  "h",  "i",  "j",  "k",  "l",  "m",  "n",  "o",  "p",  "q",  "r",  "s",  "t",  "u",  "v",  "w",  "x",  "y",  "z", "+",      "=",     "==",      "!=",       "\"",       "(",       ")",       "{",       "}",       "/*",          "*/",         "$",    "0",     "1",     "2",      "3",    "4",     "5",     "6",     "7",     "8",     "9",    '"'];
+        let types =    ["VARIABLE TYPE", "VARIABLE TYPE", "VARIABLE TYPE", "WHILE", "IF", "BOOL_VAL", "BOOL_VAL", "PRINT", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ADD", "ASSIGN", "BOOL_OP", "BOOL_OP", "QUOTE", "O-PAREN", "C-PAREN", "O-BRACE", "C-BRACE",  "OPEN COMMENT", "CLOSE COMMENT", "EOP", "DIGIT", "DIGIT", "DIGIT", "DIGIT", "DIGIT", "DIGIT", "DIGIT", "DIGIT", "DIGIT", "DIGIT", "QUOTE"];
 
         // Condition checks
         let inComment: boolean = false;
+        let inQuote: boolean = false;
 
-        //
 
-        while (pos < program.length)
+        while (this.pos < program.length)
         {
-            let currentChar = program[pos];
+            let currentChar = program[this.pos];
+            console.log(currentChar);
             let dictRef: number = tokenList.indexOf(currentChar);
-            console.log(this.nextToken(program, pos) == '=');
+
             if (dictRef < 0)
             {
                 dictRef = 0;
@@ -72,151 +64,289 @@ export class Lexer
             if (currentChar == ' ' || currentChar == '\t')
             {
                 console.log("pos + 1: space or tab");
-                pos++;
-                index++;
+                this.advance();
             }
             else if (currentChar == '\n')
             {
                 console.log("pos + 1: new line");
-                pos++;
+                this.advance();
+                this.index = 1;
                 line++;
-                index = 1;
             }
 
             // Comments! Ignore whatever's in them! -------------------------------------------
-            else if (currentChar == '/' && this.nextToken(program, pos) == '*')
+            else if (currentChar == '/' && this.nextToken(program, this.pos) == '*')
             {
-                console.log(`pos + 2: comment detected at line ${line}, index ${index}`);
-                // Add comment start token
+                dictRef = tokenList.indexOf("/*");
+                let t: Token = new Token(types[dictRef], tokenList[dictRef], line, this.index);
+                tokenStream.push(t);
                 inComment = true;
-                pos += 2;
-                index += 2;
+                this.advance();
+                this.advance();
 
-                while (inComment && pos + 1 <= program.length)
+                while (inComment && this.pos + 1 <= program.length)
                 {
-                    currentChar = program[pos];
-                    if (currentChar == '*' && this.nextToken(program, pos) == '/')
+                    currentChar = program[this.pos];
+                    if (currentChar == '*' && this.nextToken(program, this.pos) == '/')
                     {
                         inComment = false;
-                        console.log(`pos + 2: comment ended at line ${line}, index ${index}`);
-                        // Add comment end token
-                        pos += 2;
-                        index += 2;
+                        dictRef = tokenList.indexOf("*/");
+                        let t: Token = new Token(types[dictRef], tokenList[dictRef], line, this.index);
+                        tokenStream.push(t);
+                        this.advance();
+                        this.advance();
                     }
-                    else if (currentChar == '/n')
+                    else if (currentChar == '\n')
                     {
-                        console.log(`new line in comment at line ${line}, index ${index}`);
+                        console.log(`new line in comment at line ${line}, index ${this.index}`);
                         line++;
-                        index = 1;
+                        this.index = 1;
                     }
 
-                    if (pos + 1 >= program.length)
+                    if (this.pos + 1 >= program.length)
                     {
                         this.warningStream.push("WARNING: Unterminated comment. Fix this!");
-                        console.log("infinite loop - eop check");
                         inComment = false;
                     }
-                    pos++;
-                    index++;
+                    this.advance();
                 }
-
-                console.log(pos  + ` ${program[pos]}`);
             }
             // End comment code -----------------------------------------------
 
             // Single character tokens () and boolean operators
             else if (currentChar == '+')
             {
-                let t: Token = new Token(types[dictRef], tokenList[dictRef], line, index);
-                console.log(`\nLEX - ${t.type} [  ${t.value} ] found at (${t.line},${t.index})`);
+                let t: Token = new Token(types[dictRef], tokenList[dictRef], line, this.index);
                 tokenStream.push(t);
-                pos++;
-                index++;
-            }
-            else if (currentChar == '\"')
-            {
-                let t: Token = new Token(types[dictRef], tokenList[dictRef], line, index);
-                tokenStream.push(t);
-                pos++;
-                index++;
+                this.advance();
             }
             else if (currentChar == '(')
             {
-                let t: Token = new Token(types[dictRef], tokenList[dictRef], line, index);
+                let t: Token = new Token(types[dictRef], tokenList[dictRef], line, this.index);
                 tokenStream.push(t);
-                pos++;
-                index++;
+                this.advance();
             }
             else if (currentChar == ')')
             {
-                let t: Token = new Token(types[dictRef], tokenList[dictRef], line, index);
+                let t: Token = new Token(types[dictRef], tokenList[dictRef], line, this.index);
                 tokenStream.push(t);
-                pos++;
-                index++;
+                this.advance();
             }
             else if (currentChar == '{')
             {
-                let t: Token = new Token(types[dictRef], tokenList[dictRef], line, index);
-                console.log(`\nLEX - ${t.type} [  ${t.value} ] found at (${t.line},${t.index})`);
+                let t: Token = new Token(types[dictRef], tokenList[dictRef], line, this.index);
                 tokenStream.push(t);
-                pos++;
-                index++;
+                this.advance();
             }
             else if (currentChar == '}')
             {
-                let t: Token = new Token(types[dictRef], tokenList[dictRef], line, index);
-                console.log(`\nLEX - ${t.type} [  ${t.value} ] found at (${t.line},${t.index})`);
+                let t: Token = new Token(types[dictRef], tokenList[dictRef], line, this.index);
                 tokenStream.push(t);
-                pos++;
-                index++;
+                this.advance();
             }
 
             // Equals: operator or boolean?
             else if (currentChar == '=')
             {
-                if (this.nextToken(program, pos) == '=')
+                if (this.nextToken(program, this.pos) == '=')
                 {
                     dictRef = tokenList.indexOf("==");
-                    let t: Token = new Token(types[dictRef], tokenList[dictRef], line, index);
-                    console.log(`\nLEX - ${t.type} [  ${t.value} ] found at (${t.line},${t.index})`);
+                    let t: Token = new Token(types[dictRef], tokenList[dictRef], line, this.index);
                     tokenStream.push(t);
-                    pos += 2;
-                    index += 2;
+                    this.advance();
+                    this.advance();
                 }
                 else // next char in the program isn't '='
                 {
-                    let t: Token = new Token(types[dictRef], tokenList[dictRef], line, index);
-                    console.log(`\nLEX - ${t.type} [  ${t.value} ] found at (${t.line},${t.index})`);
+                    let t: Token = new Token(types[dictRef], tokenList[dictRef], line, this.index);
                     tokenStream.push(t);
-                    pos++;
-                    index++;
+                    this.advance();
                 }
             }
 
             // Not Equals: operator or boolean?
-            
             else if (currentChar == '!')
             {
-                if (this.nextToken(program, pos) == '=')
+                if (this.nextToken(program, this.pos) == '=')
                 {
                     // add the boolop token
                     dictRef = tokenList.indexOf("!=");
-                    let t: Token = new Token(types[dictRef], tokenList[dictRef], line, index);
-                    console.log(`\nLEX - ${t.type} [  ${t.value} ] found at (${t.line},${t.index})`);
+                    let t: Token = new Token(types[dictRef], tokenList[dictRef], line, this.index);
                     tokenStream.push(t);
-                    pos += 2;
-                    index += 2;
+                    this.pos += 2;
+                    this.index += 2;
                 }
                 else // next char in the program isn't '='
                 {
                     // throw an error and advance
-                    errorStream.push(`ERROR: Invalid character [ ${currentChar} ] found at (${line},${index})`);
-                    pos++;
-                    index++;
+                    errorStream.push(`ERROR: Invalid character [ ${currentChar} ] found at (${line},${this.index})`);
+                    this.advance();
                 }
             }
 
-            
+            // Digit?
+            else if (this.isDigit(currentChar))
+            {
+                console.log()
+                let t: Token = new Token(types[dictRef], tokenList[dictRef], line, this.index);
+                console.log(`\nLEX - ${t.type} [ ${t.value} ] found at (${t.line},${t.index})`);
+                tokenStream.push(t);
+                this.advance();
+            }
+
+            // Character?
+            else if (this.isChar(currentChar))
+            {
+                let charString = "";
+                let currentIndex = this.index;
+
+                console.log(`${charString}`);
+
+                while (this.pos < program.length && this.isChar(currentChar))
+                {
+                    charString += currentChar;
+                    this.advance();
+                    currentChar = program[this.pos];
+                }
+
+                let strLength = charString.length;
+                console.log(`${charString.substring(0, 2)}`);
+
+                while (strLength > 0)
+                {
+                    if (strLength == 1)
+                    {
+                        dictRef = tokenList.indexOf(charString);
+                        let t: Token = new Token(types[dictRef], tokenList[dictRef], line, currentIndex);
+                        tokenStream.push(t);
+
+                        charString = "";
+                    }
+                    else if (charString.substring(0, 3) == "int")
+                    {
+                        this.generateKeywordToken("int", line, currentIndex)
+                        dictRef = tokenList.indexOf("int");
+                        let t: Token = new Token(types[dictRef], tokenList[dictRef], line, currentIndex);
+                        tokenStream.push(t);
+                        currentIndex += 3;
+                        charString = charString.substring(3, strLength);
+                    }
+                    else
+                    {
+                        let charToken = charString.substring(0, 1);
+                        dictRef = tokenList.indexOf(charToken);
+                        let t: Token = new Token(types[dictRef], tokenList[dictRef], line, currentIndex);
+                        tokenStream.push(t);
+                        currentIndex++;
+
+                        charString = charString.substring(1, strLength);
+                    }
+                    strLength = charString.length;
+                }
+                /* while (strLength > 0)
+                {
+                    if (strLength == 1)
+                    {
+                        //id token
+                        strLength = 0;
+                    }
+                    else if (strLength >= 3 && charString.substring(0, 2) == "int")
+                    {
+                        dictRef = tokenList.indexOf("int");
+                        let t: Token = new Token(types[dictRef], tokenList[dictRef], line, currentIndex);
+                        tokenStream.push(t);
+
+                        charString = charString.substring(3, strLength - 1);
+                        currentIndex += 3;
+                    }
+                    else if (strLength >= 6 && charString.substring(0, 5) == "string")
+                    {
+                        dictRef = tokenList.indexOf("string");
+                        let t: Token = new Token(types[dictRef], tokenList[dictRef], line, currentIndex);
+                        tokenStream.push(t);
+
+                        charString = charString.substring(6, strLength - 1);
+                        currentIndex += 6;
+                    }
+                    else if (strLength >= 7 && charString.substring(0, 6) == "boolean")
+                    {
+
+                    }
+                    else if (strLength >= 5 && charString.substring(0, 4) == "while")
+                    {
+
+                    }
+                    else if (strLength >= 2 && charString.substring(0, 1) == "if")
+                    {
+
+                    }
+                    else if (strLength >= 5 && charString.substring(0, 4) == "false")
+                    {
+
+                    }
+                    else if (strLength >= 4 && charString.substring(0, 3) == "true")
+                    {
+
+                    }
+                    else if (strLength >= 5 && charString.substring(0, 4) == "print")
+                    {
+
+                    }
+                    else
+                    {
+                        // id token
+                        charString = charString.substring(1, strLength - 1);
+                        strLength--;
+                    }
+                }*/
+            }
+
+            // Quote?
+            else if (currentChar == '"')
+            {
+                let t: Token = new Token(types[dictRef], tokenList[dictRef], line, this.index);
+                console.log(`\nLEX - ${t.type} [ ${t.value} ] found at (${t.line},${t.index})`);
+                tokenStream.push(t);
+                console.log(t);
+                inQuote = true;
+                this.advance();
+
+                
+                while (inQuote == true)
+                {
+                    currentChar = program[this.pos];
+                    dictRef = tokenList.indexOf(currentChar);
+                    if (this.isDigit(currentChar) || this.isChar(currentChar))
+                    {
+                        let t: Token = new Token(types[dictRef], tokenList[dictRef], line, this.index);
+                        console.log(`\nLEX - ${t.type} [ ${t.value} ] found at (${t.line},${t.index})`);
+                        tokenStream.push(t);
+                        this.advance();
+                    }
+                    else if (currentChar == '"')
+                    {
+                        let t: Token = new Token(types[dictRef], tokenList[dictRef], line, this.index);
+                        console.log(`\nLEX - ${t.type} [ ${t.value} ] found at (${t.line},${t.index})`);
+                        tokenStream.push(t);
+                        this.advance();
+                        
+                        inQuote = false;
+                    }
+                    else
+                    {
+                        this.errorStream.push("ERROR: unrecognized character");
+                        this.advance();
+                        console.log(this.pos);
+                    }
+
+                    if (this.pos >= program.length)
+                    {
+                        this.warningStream.push("WARNING: unterminated string");
+                        inQuote = false;
+
+                    }
+                } 
+            }
 
             /*
                 KEYWORDS: "print"
@@ -266,17 +396,23 @@ export class Lexer
             */
 
             // EOP check
-            else
+            else if (currentChar == '$')
             {
-                console.log(pos);
-                pos++;
+                let t: Token = new Token(types[dictRef], tokenList[dictRef], line, this.index);
+                console.log(`\nLEX - ${t.type} [ ${t.value} ] found at (${t.line},${t.index})`);
+                tokenStream.push(t);
+                this.pos++;
+                this.index++;
+                line++;
             }
         }
 
         
         console.log(`output is ${input}`);
         
+        this.tokenStream = tokenStream;
        
+        console.log(this.tokenStream);
         return tokenStream;
     }
 
@@ -284,5 +420,32 @@ export class Lexer
     public nextToken(program: String, position: number): String
     {
         return program[position + 1];
+    }
+
+    public advance(): void
+    {
+        this.pos++;
+        this.index++;
+    }
+
+    public isDigit(c: string): boolean
+    {
+        return c.charCodeAt(0) >= 48 && c.charCodeAt(0) <= 57;
+    }
+
+    public isChar(c: string): boolean
+    {  
+        console.log(`${c} ${c.charCodeAt(0)}`)
+        return c.charCodeAt(0) >= 97 && c.charCodeAt(0) <= 122;
+    }
+
+    public handleKeyword(): void
+    {
+
+    }
+
+    public generateKeywordToken(t: string, line: number, index: number): void
+    {
+
     }
 }
