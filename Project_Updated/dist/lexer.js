@@ -26,7 +26,7 @@ export class Lexer {
         // Variables -----------------
         let line = 1;
         // Tokens, Errors and Warnings
-        let tokenStream = [];
+        // let tokenStream: Token[] = [];
         let errorStream = [];
         let warningStream = [];
         // Dictionaries (courtesy of Aidan Carr, slightly modified by me)
@@ -58,7 +58,7 @@ export class Lexer {
             else if (currentChar == '/' && this.nextToken(program, this.pos) == '*') {
                 dictRef = tokenList.indexOf("/*");
                 let t = new Token(types[dictRef], tokenList[dictRef], line, this.index);
-                tokenStream.push(t);
+                this.tokenStream.push(t);
                 inComment = true;
                 this.advance();
                 this.advance();
@@ -68,7 +68,7 @@ export class Lexer {
                         inComment = false;
                         dictRef = tokenList.indexOf("*/");
                         let t = new Token(types[dictRef], tokenList[dictRef], line, this.index);
-                        tokenStream.push(t);
+                        this.tokenStream.push(t);
                         this.advance();
                         this.advance();
                     }
@@ -88,27 +88,27 @@ export class Lexer {
             // Single character tokens () and boolean operators
             else if (currentChar == '+') {
                 let t = new Token(types[dictRef], tokenList[dictRef], line, this.index);
-                tokenStream.push(t);
+                this.tokenStream.push(t);
                 this.advance();
             }
             else if (currentChar == '(') {
                 let t = new Token(types[dictRef], tokenList[dictRef], line, this.index);
-                tokenStream.push(t);
+                this.tokenStream.push(t);
                 this.advance();
             }
             else if (currentChar == ')') {
                 let t = new Token(types[dictRef], tokenList[dictRef], line, this.index);
-                tokenStream.push(t);
+                this.tokenStream.push(t);
                 this.advance();
             }
             else if (currentChar == '{') {
                 let t = new Token(types[dictRef], tokenList[dictRef], line, this.index);
-                tokenStream.push(t);
+                this.tokenStream.push(t);
                 this.advance();
             }
             else if (currentChar == '}') {
                 let t = new Token(types[dictRef], tokenList[dictRef], line, this.index);
-                tokenStream.push(t);
+                this.tokenStream.push(t);
                 this.advance();
             }
             // Equals: operator or boolean?
@@ -116,14 +116,14 @@ export class Lexer {
                 if (this.nextToken(program, this.pos) == '=') {
                     dictRef = tokenList.indexOf("==");
                     let t = new Token(types[dictRef], tokenList[dictRef], line, this.index);
-                    tokenStream.push(t);
+                    this.tokenStream.push(t);
                     this.advance();
                     this.advance();
                 }
                 else // next char in the program isn't '='
                  {
                     let t = new Token(types[dictRef], tokenList[dictRef], line, this.index);
-                    tokenStream.push(t);
+                    this.tokenStream.push(t);
                     this.advance();
                 }
             }
@@ -133,7 +133,7 @@ export class Lexer {
                     // add the boolop token
                     dictRef = tokenList.indexOf("!=");
                     let t = new Token(types[dictRef], tokenList[dictRef], line, this.index);
-                    tokenStream.push(t);
+                    this.tokenStream.push(t);
                     this.pos += 2;
                     this.index += 2;
                 }
@@ -149,7 +149,7 @@ export class Lexer {
                 console.log();
                 let t = new Token(types[dictRef], tokenList[dictRef], line, this.index);
                 console.log(`\nLEX - ${t.type} [ ${t.value} ] found at (${t.line},${t.index})`);
-                tokenStream.push(t);
+                this.tokenStream.push(t);
                 this.advance();
             }
             // Character?
@@ -168,13 +168,14 @@ export class Lexer {
                     if (strLength == 1) {
                         dictRef = tokenList.indexOf(charString);
                         let t = new Token(types[dictRef], tokenList[dictRef], line, currentIndex);
-                        tokenStream.push(t);
+                        this.tokenStream.push(t);
                         charString = "";
                     }
                     else if (charString.substring(0, 3) == "int") {
+                        this.generateKeywordToken("int", line, currentIndex);
                         dictRef = tokenList.indexOf("int");
                         let t = new Token(types[dictRef], tokenList[dictRef], line, currentIndex);
-                        tokenStream.push(t);
+                        this.tokenStream.push(t);
                         currentIndex += 3;
                         charString = charString.substring(3, strLength);
                     }
@@ -182,7 +183,7 @@ export class Lexer {
                         let charToken = charString.substring(0, 1);
                         dictRef = tokenList.indexOf(charToken);
                         let t = new Token(types[dictRef], tokenList[dictRef], line, currentIndex);
-                        tokenStream.push(t);
+                        this.tokenStream.push(t);
                         currentIndex++;
                         charString = charString.substring(1, strLength);
                     }
@@ -199,7 +200,7 @@ export class Lexer {
                     {
                         dictRef = tokenList.indexOf("int");
                         let t: Token = new Token(types[dictRef], tokenList[dictRef], line, currentIndex);
-                        tokenStream.push(t);
+                        this.tokenStream.push(t);
 
                         charString = charString.substring(3, strLength - 1);
                         currentIndex += 3;
@@ -208,7 +209,7 @@ export class Lexer {
                     {
                         dictRef = tokenList.indexOf("string");
                         let t: Token = new Token(types[dictRef], tokenList[dictRef], line, currentIndex);
-                        tokenStream.push(t);
+                        this.tokenStream.push(t);
 
                         charString = charString.substring(6, strLength - 1);
                         currentIndex += 6;
@@ -249,7 +250,7 @@ export class Lexer {
             else if (currentChar == '"') {
                 let t = new Token(types[dictRef], tokenList[dictRef], line, this.index);
                 console.log(`\nLEX - ${t.type} [ ${t.value} ] found at (${t.line},${t.index})`);
-                tokenStream.push(t);
+                this.tokenStream.push(t);
                 console.log(t);
                 inQuote = true;
                 this.advance();
@@ -259,13 +260,13 @@ export class Lexer {
                     if (this.isDigit(currentChar) || this.isChar(currentChar)) {
                         let t = new Token(types[dictRef], tokenList[dictRef], line, this.index);
                         console.log(`\nLEX - ${t.type} [ ${t.value} ] found at (${t.line},${t.index})`);
-                        tokenStream.push(t);
+                        this.tokenStream.push(t);
                         this.advance();
                     }
                     else if (currentChar == '"') {
                         let t = new Token(types[dictRef], tokenList[dictRef], line, this.index);
                         console.log(`\nLEX - ${t.type} [ ${t.value} ] found at (${t.line},${t.index})`);
-                        tokenStream.push(t);
+                        this.tokenStream.push(t);
                         this.advance();
                         inQuote = false;
                     }
@@ -330,16 +331,15 @@ export class Lexer {
             else if (currentChar == '$') {
                 let t = new Token(types[dictRef], tokenList[dictRef], line, this.index);
                 console.log(`\nLEX - ${t.type} [ ${t.value} ] found at (${t.line},${t.index})`);
-                tokenStream.push(t);
+                this.tokenStream.push(t);
                 this.pos++;
                 this.index++;
                 line++;
             }
         }
         console.log(`output is ${input}`);
-        this.tokenStream = tokenStream;
         console.log(this.tokenStream);
-        return tokenStream;
+        return this.tokenStream;
     }
     // Helper functions
     nextToken(program, position) {
@@ -357,6 +357,8 @@ export class Lexer {
         return c.charCodeAt(0) >= 97 && c.charCodeAt(0) <= 122;
     }
     handleKeyword() {
+    }
+    generateKeywordToken(t, line, index) {
     }
 }
 //# sourceMappingURL=lexer.js.map
