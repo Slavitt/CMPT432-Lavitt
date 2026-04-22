@@ -7,6 +7,7 @@ function startCompilation() {
     let message = program === null || program === void 0 ? void 0 : program.value.trim();
     if (output.value.length > 0) {
         output.value += "\n";
+        output.value = "";
     }
     output.value += "Starting compilation...\n";
     output.value += "LEXER - begin lex --------------------\n";

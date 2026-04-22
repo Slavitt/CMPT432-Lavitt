@@ -11,6 +11,7 @@ function startCompilation(): void {
 
   if (output.value.length > 0) {
     output.value += "\n";
+    output.value = "";
   }
 
   output.value += "Starting compilation...\n";
