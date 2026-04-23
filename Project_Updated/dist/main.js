@@ -16,15 +16,20 @@ function startCompilation() {
     for (let i = 0; i < lexTest.length; i++) {
         output.value += `\nLEX - ${lexTest[i].type} [  ${lexTest[i].value} ] found at (${lexTest[i].line},${lexTest[i].index})`;
     }
+    output.value += `\n\nLEX COMPLETE with ${newLexer.errorStream.length} errors and ${newLexer.warningStream.length} warnings`;
     if (newLexer.warningStream.length > 0) {
         for (let i = 0; i < newLexer.warningStream.length; i++) {
             output.value += `\n${newLexer.warningStream[i]}`;
         }
     }
-    output.value += "\nLEXER - lex complete-----------------";
     if (newLexer.errorStream.length > 0) {
-        // do not move on to parse
-        // list errors
+        for (let i = 0; i < newLexer.errorStream.length; i++) {
+            output.value += `\n${newLexer.errorStream[i]}`;
+        }
+        output.value += `\nLex Failed - error(s) detected`;
+    }
+    else {
+        output.value += "\nLEXER - lex success -----------------";
     }
     output.scrollTop = output.scrollHeight;
 }

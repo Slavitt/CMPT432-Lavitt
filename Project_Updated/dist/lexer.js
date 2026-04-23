@@ -31,15 +31,12 @@ export class Lexer {
         let inQuote = false;
         while (this.pos < program.length) {
             let currentChar = program[this.pos];
-            console.log(currentChar);
             // Ignore whitespace and tabs (getting rid of that pesky IDE formatting)
             // Move on in the program string and advance the index number for the next token
             if (currentChar == ' ' || currentChar == '\t') {
-                console.log("pos + 1: space or tab");
                 this.advance();
             }
             else if (currentChar == '\n') {
-                console.log("pos + 1: new line");
                 this.advance();
                 this.index = 1;
                 this.line++;
@@ -215,10 +212,12 @@ export class Lexer {
                         this.advance();
                         inQuote = false;
                     }
-                    else {
-                        this.errorStream.push("ERROR: unrecognized character");
+                    else if (currentChar == ' ') {
                         this.advance();
-                        console.log(this.pos);
+                    }
+                    else {
+                        this.errorStream.push(`ERROR: unidentified character [ ${currentChar} ] at (${this.line},${this.index})`);
+                        this.advance();
                     }
                     if (this.pos >= program.length) {
                         this.warningStream.push("WARNING: unterminated string");
@@ -233,6 +232,16 @@ export class Lexer {
                 this.index++;
                 this.line++;
             }
+            // unidentified characters
+            else {
+                this.errorStream.push(`ERROR: unidentified character [ ${currentChar} ] at (${this.line},${this.index})`);
+                console.log(`${currentChar}, (${this.line},${this.index})`);
+                this.advance();
+            }
+        }
+        if (input.substring(input.length - 1, input.length) != "$") {
+            console.log(input.substring(input.length - 1));
+            this.warningStream.push("WARNING: EOP symbol not detected");
         }
         console.log(`output is ${input}`);
         console.log(this.tokenStream);
@@ -250,7 +259,6 @@ export class Lexer {
         return c.charCodeAt(0) >= 48 && c.charCodeAt(0) <= 57;
     }
     isChar(c) {
-        console.log(`${c} ${c.charCodeAt(0)}`);
         return c.charCodeAt(0) >= 97 && c.charCodeAt(0) <= 122;
     }
     handleKeyword() {
@@ -259,13 +267,13 @@ export class Lexer {
         let ref = this.tokenList.indexOf(s);
         let t = new Token(this.types[ref], this.tokenList[ref], this.line, this.index);
         this.tokenStream.push(t);
-        console.log(`\nLEX - ${t.type} [ ${t.value} ] found at (${t.line},${t.index})`);
+        console.log(`LEX - ${t.type} [ ${t.value} ] found at (${t.line},${t.index})`);
     }
     generateKeywordToken(s, i) {
         let ref = this.tokenList.indexOf(s);
         let t = new Token(this.types[ref], this.tokenList[ref], this.line, i);
         this.tokenStream.push(t);
-        console.log(`\nLEX - ${t.type} [ ${t.value} ] found at (${t.line},${t.index})`);
+        console.log(`LEX - ${t.type} [ ${t.value} ] found at (${t.line},${t.index})`);
     }
 }
 //# sourceMappingURL=lexer.js.map
