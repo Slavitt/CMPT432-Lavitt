@@ -1,0 +1,304 @@
+import { Token } from "./Token.js";
+// export type NodeKind = "root" | "branch" | "leaf";
+
+export class Node
+{
+    name: string;
+    kind: string;
+    parent: Node | null;
+    children: Node[];
+
+    constructor(name: string, kind: string, parent: Node | null)
+    {
+        this.name = name;
+        this.kind = kind;
+        this.parent = parent;
+        this.children = [];
+    }
+}
+
+export class CST
+{
+    root: Node | null;
+    current: Node | null;
+
+    constructor()
+    {
+        this.root = null;
+        this.current = null;
+    }
+
+    addNode(kind: string, name: string): void
+    {
+        let n = new Node(name, kind, this.current);
+
+        if (this.root == null)
+        {
+            this.root = n;
+            n.parent = null;
+        }
+        else
+        {
+            n.parent = this.current;
+            this.current!.children.push(n);
+        }
+
+        if (kind != "leaf")
+        {
+            this.current = n;
+        }
+    }
+
+    moveUp(): void
+    {
+        if (this.current != null && this.current.parent != null)
+        {
+            this.current = this.current.parent;
+        }
+    }
+}
+
+export class Parser
+{
+    cst: CST = new CST();
+    tokenStream: Token[] = [];
+    errorStream: string[] = [];
+    pos: number = 0;
+
+    constructor() { }
+
+    parseProgram(tokenStream: Token[]): void
+    {
+        this.tokenStream = tokenStream;
+        this.cst.addNode("root", "Program");
+        this.parseBlock();
+        this.match(["$"]);
+        this.cst.moveUp();
+    }
+
+    parseBlock(): void
+    {
+        this.cst.addNode("branch", "Block");
+        this.match(["{"]);
+        this.parseStatementList();
+        this.match(["}"]);
+        this.cst.moveUp();
+    }
+
+    parseStatementList(): void
+    {
+        this.cst.addNode("branch", "StatementList");
+        let currentToken = this.tokenStream[this.pos];
+
+        if (["print", "if", "while", "{"].includes(currentToken.value)
+            || currentToken.type == "ID"
+            || currentToken.type == "VARIABLE TYPE")
+        {
+            this.parseStatement();
+            this.parseStatementList();
+        }
+
+        this.cst.moveUp();
+    }
+
+    parseStatement(): void
+    {
+        this.cst.addNode("branch", "Statement");
+        let currentToken = this.tokenStream[this.pos];
+
+        if (currentToken.value == "print")
+        {
+            this.parsePrintStatement();
+        }
+        else if (currentToken.type == "ID")
+        {
+            this.parseAssignmentStatement();
+        }
+        else if (currentToken.type == "VARIABLE TYPE")
+        {
+            this.parseVarDecl();
+        }
+        else if (currentToken.value == "while")
+        {
+            this.parseWhileStatement();
+        }
+        else if (currentToken.value == "if")
+        {
+            this.parseIfStatement();
+        }
+        else if (currentToken.value == "{")
+        {
+            this.parseBlock();
+        }
+        else
+        {
+            this.errorStream.push(`PARSE ERROR: Unexpected token [ ${currentToken.value} ] at (${currentToken.line}, ${currentToken.index})`);
+        }
+
+        this.cst.moveUp();
+    }
+
+    parsePrintStatement(): void
+    {
+        this.cst.addNode("branch", "PrintStatement");
+        this.match(["print"]);
+        this.match(["("]);
+        this.parseExpr();
+        this.match([")"]);
+        this.cst.moveUp();
+    }
+
+    parseAssignmentStatement(): void
+    {
+        this.cst.addNode("branch", "AssignmentStatement");
+        this.parseId();
+        this.match(["="]);
+        this.parseExpr();
+        this.cst.moveUp();
+    }
+
+    parseVarDecl(): void
+    {
+        this.cst.addNode("branch", "VarDecl");
+        this.match(["int", "string", "boolean"]);
+        this.parseId();
+        this.cst.moveUp();
+    }
+
+    parseWhileStatement(): void
+    {
+        this.cst.addNode("branch", "WhileStatement");
+        this.match(["while"]);
+        this.parseBooleanExpr();
+        this.parseBlock();
+        this.cst.moveUp();
+    }
+
+    parseIfStatement(): void
+    {
+        this.cst.addNode("branch", "IfStatement");
+        this.match(["if"]);
+        this.parseBooleanExpr();
+        this.parseBlock();
+        this.cst.moveUp();
+    }
+
+    parseExpr(): void
+    {
+        this.cst.addNode("branch", "Expr");
+        let currentToken = this.tokenStream[this.pos];
+
+        if (currentToken.type == "DIGIT")
+        {
+            this.parseIntExpr();
+        }
+        else if (currentToken.type == "QUOTE")
+        {
+            this.parseStringExpr();
+        }
+        else if (currentToken.value == "(" || currentToken.type == "BOOL_VAL")
+        {
+            this.parseBooleanExpr();
+        }
+        else if (currentToken.type == "ID")
+        {
+            this.parseId();
+        }
+        else
+        {
+            this.errorStream.push(`PARSE ERROR: Unexpected token [ ${currentToken.value} ] at (${currentToken.line}, ${currentToken.index})`);
+        }
+
+        this.cst.moveUp();
+    }
+
+    parseIntExpr(): void
+    {
+        this.cst.addNode("branch", "IntExpr");
+        this.match(["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]);
+
+        if (this.tokenStream[this.pos].value == "+")
+        {
+            this.match(["+"]);
+            this.parseExpr();
+        }
+
+        this.cst.moveUp();
+    }
+
+    parseStringExpr(): void
+    {
+        this.cst.addNode("branch", "StringExpr");
+        this.match(["\""]);
+        this.parseCharList();
+        this.match(["\""]);
+        this.cst.moveUp();
+    }
+
+    parseBooleanExpr(): void
+    {
+        this.cst.addNode("branch", "BooleanExpr");
+        let currentToken = this.tokenStream[this.pos];
+
+        if (currentToken.value == "(")
+        {
+            this.match(["("]);
+            this.parseExpr();
+            this.match(["==", "!="]);
+            this.parseExpr();
+            this.match([")"]);
+        }
+        else if (currentToken.type == "BOOL_VAL")
+        {
+            this.match(["true", "false"]);
+        }
+        else
+        {
+            this.errorStream.push(`PARSE ERROR: Unexpected token [ ${currentToken.value} ] at (${currentToken.line}, ${currentToken.index})`);
+        }
+
+        this.cst.moveUp();
+    }
+
+    parseId(): void
+    {
+        this.cst.addNode("branch", "Id");
+        this.match(["a","b","c","d","e","f","g","h","i","j","k","l","m",
+                    "n","o","p","q","r","s","t","u","v","w","x","y","z"]);
+        this.cst.moveUp();
+    }
+
+    parseCharList(): void
+    {
+        this.cst.addNode("branch", "CharList");
+        let currentToken = this.tokenStream[this.pos];
+
+        if (currentToken.type == "ID")
+        {
+            this.match(["a","b","c","d","e","f","g","h","i","j","k","l","m",
+                        "n","o","p","q","r","s","t","u","v","w","x","y","z"]);
+            this.parseCharList();
+        }
+        else if (currentToken.type == "SPACE")
+        {
+            this.match([" "]);
+            this.parseCharList();
+        }
+
+        this.cst.moveUp();
+    }
+
+    match(expected: string[]): void
+    {
+        let currentToken = this.tokenStream[this.pos];
+        if (expected.includes(currentToken.value))
+        {
+            this.cst.addNode("leaf", currentToken.value);
+            this.pos++;
+        }
+        else
+        {
+            this.errorStream.push(`PARSE ERROR: Expected [ ${expected.join(" | ")} ] but found [ ${currentToken.value} ] at (${currentToken.line}, ${currentToken.index})`);
+        }
+    }
+}

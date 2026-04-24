@@ -2,62 +2,107 @@
 // npx http-server . -c-1 to run server
 
 import { Lexer } from "./lexer.js";
+import { Parser, Node, CST } from "./parser.js";
 
 function startCompilation(): void {
-  let program = document.getElementById("alert-input") as HTMLInputElement;
-  let output = document.getElementById("alert-output") as HTMLTextAreaElement;
-  
-  let message = program?.value.trim();
+	let program = document.getElementById("alert-input") as HTMLInputElement;
+	let output = document.getElementById("alert-output") as HTMLTextAreaElement;
+	
+	let message = program?.value.trim();
 
-  if (output.value.length > 0) {
-    output.value += "\n";
-    output.value = "";
-  }
+	if (output.value.length > 0) {
+		output.value += "\n";
+		output.value = "";
+	}
 
-  output.value += "Starting compilation...\n";
-  output.value += "LEXER - begin lex --------------------\n";
+	output.value += "Starting compilation...\n";
+	output.value += "LEXER - begin lex --------------------\n";
 
-  let newLexer = new Lexer();
-  let lexTest = newLexer.generateTokens(message);
+	let _Lexer = new Lexer();
 
-  for (let i = 0; i < lexTest.length; i++)
-  {
-    output.value += `\nLEX - ${lexTest[i].type} [  ${lexTest[i].value} ] found at (${lexTest[i].line},${lexTest[i].index})`;
-  }
-  
-  output.value += `\n\nLEX COMPLETE with ${newLexer.errorStream.length} errors and ${newLexer.warningStream.length} warnings`
+	// LEX ---------------------------------------------------------------------------------------
+	let tokenStream = _Lexer.generateTokens(message);
+	let lexSuccess = false;
 
-  if (newLexer.warningStream.length > 0)
-  {
-    for (let i = 0; i < newLexer.warningStream.length; i++)
-            {
-                output.value += `\n${newLexer.warningStream[i]}`;
-            }
-  }
+	// Outputs the token stream --------------------------
+	for (let i = 0; i < tokenStream.length; i++)
+	{
+		output.value += `\nLEX - ${tokenStream[i].type} [  ${tokenStream[i].value} ] found at (${tokenStream[i].line},${tokenStream[i].index})`;
+	}
+
+	// Outputs the warnings, if there are any --------------------------
+	if (_Lexer.warningStream.length > 0)
+	{
+		for (let i = 0; i < _Lexer.warningStream.length; i++)
+		{
+			output.value += `\n${_Lexer.warningStream[i]}`;
+		}
+	}
+
+	// Outputs the errors, if there are any ------------------------------
+	// If there are errors, the lex fails and the compilation halts
+	if (_Lexer.errorStream.length > 0)
+	{
+		for (let i = 0; i < _Lexer.errorStream.length; i++)
+		{
+			output.value += `\n${_Lexer.errorStream[i]}`;
+		}
+		output.value += `\n\nLEX COMPLETE with ${_Lexer.errorStream.length} errors and ${_Lexer.warningStream.length} warnings`
+		output.value += `\nLex Failed - error(s) detected`;
+	}
+	else // if the lex succeeds, it moves onto the parse!
+	{
+		output.value += "\nLEXER - lex success -----------------";
+		lexSuccess = true;
+	}
+
+
+	// PARSE ----------------------------------------------------------------------
+	let _Parser = new Parser();
+	let parseSuccess = false;
+
+	output.value += "\nPARSER - beginning parse... -----------------";
+
+	if (lexSuccess == true)
+	{
+		console.log("let's parse!");
+		_Parser.parseProgram(tokenStream);
+	}
+
+	if (_Parser.errorStream.length > 0)
+	{
+		for (let i = 0; i < _Parser.errorStream.length; i++)
+		{
+			output.value += `\n${_Parser.errorStream[i]}`;
+		}
+		output.value += `\n\nPARSE COMPLETE with ${_Parser.errorStream.length} errors`;
+		output.value += `\nParse Failed - error(s) detected`;
+	}
+	else
+	{
+		output.value += "\nLEXER - parse success -----------------";
+		console.log(_Parser.cst);
+	}
 
 
 
-  if (newLexer.errorStream.length > 0)
-  {
-    for (let i = 0; i < newLexer.errorStream.length; i++)
-    {
-      output.value += `\n${newLexer.errorStream[i]}`;
-    }
-    output.value += `\nLex Failed - error(s) detected`;
-  }
-  else
-  {
-      output.value += "\nLEXER - lex success -----------------";
-  }
-  
-  output.scrollTop = output.scrollHeight;
+
+
+
+
+
+
+
+
+	output.scrollTop = output.scrollHeight;
 }
  
 function init(): void {
-  const button = document.getElementById("hello-btn") as HTMLButtonElement;
-  if (button) {
-    button.addEventListener("click", startCompilation);
-  }
+	const button = document.getElementById("hello-btn") as HTMLButtonElement;
+	if (button) 
+	{
+		button.addEventListener("click", startCompilation);
+	}
 }
  
 init();
