@@ -2,7 +2,7 @@
 // npx http-server . -c-1 to run server
 
 import { Lexer } from "./lexer.js";
-import { Parser, Node, CST } from "./parser.js";
+import { Parser, CST } from "./parser.js";
 
 function startCompilation(): void {
 	let program = document.getElementById("alert-input") as HTMLInputElement;
@@ -75,7 +75,7 @@ function startCompilation(): void {
 	}
 
 	output.value += `\n${_Parser.cst.printTree()}`;
-	
+
 	if (_Parser.errorStream.length > 0)
 	{
 		for (let i = 0; i < _Parser.errorStream.length; i++)

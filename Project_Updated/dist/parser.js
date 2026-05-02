@@ -1,16 +1,9 @@
+import { Node } from "./Node.js";
 /*
 TO DO:
     - error recovery
     - displaying the CST in the textbox
 */
-export class Node {
-    constructor(name, kind, parent) {
-        this.name = name;
-        this.kind = kind;
-        this.parent = parent;
-        this.children = [];
-    }
-}
 export class CST {
     constructor() {
         this.root = null;
