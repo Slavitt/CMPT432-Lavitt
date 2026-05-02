@@ -87,7 +87,7 @@ function startCompilation(): void {
 	}
 	else
 	{
-		output.value += "\nLEXER - parse success -----------------";
+		output.value += "\nPARSER - parse success -----------------";
 		console.log(_Parser.cst);
 	}
 

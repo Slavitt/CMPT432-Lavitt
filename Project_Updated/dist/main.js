@@ -60,7 +60,7 @@ function startCompilation() {
         output.value += `\nParse Failed - error(s) detected`;
     }
     else {
-        output.value += "\nLEXER - parse success -----------------";
+        output.value += "\nPARSER - parse success -----------------";
         console.log(_Parser.cst);
     }
     output.scrollTop = output.scrollHeight;

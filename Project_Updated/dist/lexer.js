@@ -239,6 +239,7 @@ export class Lexer {
                 this.advance();
             }
         }
+        // Checks for an EOP token at the end of the input
         if (input.substring(input.length - 1, input.length) != "$") {
             console.log(input.substring(input.length - 1));
             this.warningStream.push("WARNING: EOP symbol not detected");
