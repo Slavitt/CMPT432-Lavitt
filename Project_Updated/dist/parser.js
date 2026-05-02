@@ -35,6 +35,29 @@ export class CST {
             this.current = this.current.parent;
         }
     }
+    printTree() {
+        if (this.root != null) {
+            return this.traverse(this.root, 0);
+        }
+        return "";
+    }
+    traverse(node, depth) {
+        let outputTree = "";
+        let dashDepth = "";
+        for (let i = 0; i < depth; i++) {
+            dashDepth += "-";
+        }
+        if (node.kind == "leaf") {
+            outputTree += `${dashDepth}[${node.name}]\n`;
+        }
+        else {
+            outputTree += `${dashDepth}{${node.name}}\n`;
+        }
+        for (let n of node.children) {
+            outputTree += this.traverse(n, depth + 1);
+        }
+        return outputTree;
+    }
 }
 export class Parser {
     constructor() {

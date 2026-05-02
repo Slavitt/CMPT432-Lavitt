@@ -61,6 +61,42 @@ export class CST
             this.current = this.current.parent;
         }
     }
+
+    printTree(): string
+    {
+        if (this.root != null)
+        {
+            return this.traverse(this.root, 0);
+        }
+        return "";
+    }
+
+    traverse(node: Node, depth: number): string
+    {
+        let outputTree: string = "";
+        let dashDepth: string = "";
+
+        for (let i = 0; i < depth; i++)
+        {
+            dashDepth += "-";
+        }
+
+        if (node.kind == "leaf")
+        {
+            outputTree += `${dashDepth}[${node.name}]\n`
+        }
+        else
+        {
+            outputTree += `${dashDepth}{${node.name}}\n`
+        }
+
+        for (let n of node.children)
+        {
+            outputTree += this.traverse(n, depth + 1);
+        }
+
+        return outputTree;
+    }
 }
 
 export class Parser

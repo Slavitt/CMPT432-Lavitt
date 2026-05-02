@@ -74,6 +74,8 @@ function startCompilation(): void {
 		output.value += `\n${_Parser.parseTree[i]}`;
 	}
 
+	output.value += `\n${_Parser.cst.printTree()}`;
+	
 	if (_Parser.errorStream.length > 0)
 	{
 		for (let i = 0; i < _Parser.errorStream.length; i++)
