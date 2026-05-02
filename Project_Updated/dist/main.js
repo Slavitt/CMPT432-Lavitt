@@ -48,6 +48,9 @@ function startCompilation() {
         console.log("let's parse!");
         _Parser.parseProgram(tokenStream);
     }
+    for (let i = 0; i < _Parser.parseTree.length; i++) {
+        output.value += `\n${_Parser.parseTree[i]}`;
+    }
     if (_Parser.errorStream.length > 0) {
         for (let i = 0; i < _Parser.errorStream.length; i++) {
             output.value += `\n${_Parser.errorStream[i]}`;

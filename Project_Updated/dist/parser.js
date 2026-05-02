@@ -1,4 +1,8 @@
-// export type NodeKind = "root" | "branch" | "leaf";
+/*
+TO DO:
+    - error recovery
+    - displaying the CST in the textbox
+*/
 export class Node {
     constructor(name, kind, parent) {
         this.name = name;
@@ -38,8 +42,10 @@ export class Parser {
         this.tokenStream = [];
         this.errorStream = [];
         this.pos = 0;
+        this.parseTree = [];
     }
     parseProgram(tokenStream) {
+        this.parseTree.push("PARSE - parseProgram()");
         this.tokenStream = tokenStream;
         this.cst.addNode("root", "Program");
         this.parseBlock();
@@ -47,6 +53,7 @@ export class Parser {
         this.cst.moveUp();
     }
     parseBlock() {
+        this.parseTree.push("PARSE - parseBlock()");
         this.cst.addNode("branch", "Block");
         this.match(["{"]);
         this.parseStatementList();
@@ -54,6 +61,7 @@ export class Parser {
         this.cst.moveUp();
     }
     parseStatementList() {
+        this.parseTree.push("PARSE - parseStatementList()");
         this.cst.addNode("branch", "StatementList");
         let currentToken = this.tokenStream[this.pos];
         if (["print", "if", "while", "{"].includes(currentToken.value)
@@ -65,6 +73,7 @@ export class Parser {
         this.cst.moveUp();
     }
     parseStatement() {
+        this.parseTree.push("PARSE - parseStatement()");
         this.cst.addNode("branch", "Statement");
         let currentToken = this.tokenStream[this.pos];
         if (currentToken.value == "print") {
@@ -91,6 +100,7 @@ export class Parser {
         this.cst.moveUp();
     }
     parsePrintStatement() {
+        this.parseTree.push("PARSE - parsePrintStatement()");
         this.cst.addNode("branch", "PrintStatement");
         this.match(["print"]);
         this.match(["("]);
@@ -99,6 +109,7 @@ export class Parser {
         this.cst.moveUp();
     }
     parseAssignmentStatement() {
+        this.parseTree.push("PARSE - parseAssignmentStatement()");
         this.cst.addNode("branch", "AssignmentStatement");
         this.parseId();
         this.match(["="]);
@@ -106,12 +117,14 @@ export class Parser {
         this.cst.moveUp();
     }
     parseVarDecl() {
+        this.parseTree.push("PARSE - parseVarDecl()");
         this.cst.addNode("branch", "VarDecl");
         this.match(["int", "string", "boolean"]);
         this.parseId();
         this.cst.moveUp();
     }
     parseWhileStatement() {
+        this.parseTree.push("PARSE - parseWhileStatement()");
         this.cst.addNode("branch", "WhileStatement");
         this.match(["while"]);
         this.parseBooleanExpr();
@@ -119,6 +132,7 @@ export class Parser {
         this.cst.moveUp();
     }
     parseIfStatement() {
+        this.parseTree.push("PARSE - parseIfStatement()");
         this.cst.addNode("branch", "IfStatement");
         this.match(["if"]);
         this.parseBooleanExpr();
@@ -126,6 +140,7 @@ export class Parser {
         this.cst.moveUp();
     }
     parseExpr() {
+        this.parseTree.push("PARSE - parseExpr()");
         this.cst.addNode("branch", "Expr");
         let currentToken = this.tokenStream[this.pos];
         if (currentToken.type == "DIGIT") {
@@ -146,6 +161,7 @@ export class Parser {
         this.cst.moveUp();
     }
     parseIntExpr() {
+        this.parseTree.push("PARSE - parseIntExpr()");
         this.cst.addNode("branch", "IntExpr");
         this.match(["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]);
         if (this.tokenStream[this.pos].value == "+") {
@@ -155,6 +171,7 @@ export class Parser {
         this.cst.moveUp();
     }
     parseStringExpr() {
+        this.parseTree.push("PARSE - parseStringExpr()");
         this.cst.addNode("branch", "StringExpr");
         this.match(["\""]);
         this.parseCharList();
@@ -162,6 +179,7 @@ export class Parser {
         this.cst.moveUp();
     }
     parseBooleanExpr() {
+        this.parseTree.push("PARSE - parseBooleanExpr()");
         this.cst.addNode("branch", "BooleanExpr");
         let currentToken = this.tokenStream[this.pos];
         if (currentToken.value == "(") {
@@ -180,12 +198,14 @@ export class Parser {
         this.cst.moveUp();
     }
     parseId() {
+        this.parseTree.push("PARSE - parseID()");
         this.cst.addNode("branch", "Id");
         this.match(["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m",
             "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"]);
         this.cst.moveUp();
     }
     parseCharList() {
+        this.parseTree.push("PARSE - parseCharList()");
         this.cst.addNode("branch", "CharList");
         let currentToken = this.tokenStream[this.pos];
         if (currentToken.type == "ID") {

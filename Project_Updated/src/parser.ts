@@ -1,5 +1,10 @@
 import { Token } from "./Token.js";
-// export type NodeKind = "root" | "branch" | "leaf";
+
+/*
+TO DO: 
+    - error recovery
+    - displaying the CST in the textbox
+*/
 
 export class Node
 {
@@ -64,11 +69,13 @@ export class Parser
     tokenStream: Token[] = [];
     errorStream: string[] = [];
     pos: number = 0;
-
+    parseTree: string[] = [];
+    
     constructor() { }
 
     parseProgram(tokenStream: Token[]): void
     {
+        this.parseTree.push("PARSE - parseProgram()");
         this.tokenStream = tokenStream;
         this.cst.addNode("root", "Program");
         this.parseBlock();
@@ -78,6 +85,7 @@ export class Parser
 
     parseBlock(): void
     {
+        this.parseTree.push("PARSE - parseBlock()");
         this.cst.addNode("branch", "Block");
         this.match(["{"]);
         this.parseStatementList();
@@ -87,6 +95,7 @@ export class Parser
 
     parseStatementList(): void
     {
+        this.parseTree.push("PARSE - parseStatementList()");
         this.cst.addNode("branch", "StatementList");
         let currentToken = this.tokenStream[this.pos];
 
@@ -103,6 +112,7 @@ export class Parser
 
     parseStatement(): void
     {
+        this.parseTree.push("PARSE - parseStatement()");
         this.cst.addNode("branch", "Statement");
         let currentToken = this.tokenStream[this.pos];
 
@@ -140,6 +150,7 @@ export class Parser
 
     parsePrintStatement(): void
     {
+        this.parseTree.push("PARSE - parsePrintStatement()");
         this.cst.addNode("branch", "PrintStatement");
         this.match(["print"]);
         this.match(["("]);
@@ -150,6 +161,7 @@ export class Parser
 
     parseAssignmentStatement(): void
     {
+        this.parseTree.push("PARSE - parseAssignmentStatement()");
         this.cst.addNode("branch", "AssignmentStatement");
         this.parseId();
         this.match(["="]);
@@ -159,6 +171,7 @@ export class Parser
 
     parseVarDecl(): void
     {
+        this.parseTree.push("PARSE - parseVarDecl()");
         this.cst.addNode("branch", "VarDecl");
         this.match(["int", "string", "boolean"]);
         this.parseId();
@@ -167,6 +180,7 @@ export class Parser
 
     parseWhileStatement(): void
     {
+        this.parseTree.push("PARSE - parseWhileStatement()");
         this.cst.addNode("branch", "WhileStatement");
         this.match(["while"]);
         this.parseBooleanExpr();
@@ -176,6 +190,7 @@ export class Parser
 
     parseIfStatement(): void
     {
+        this.parseTree.push("PARSE - parseIfStatement()");
         this.cst.addNode("branch", "IfStatement");
         this.match(["if"]);
         this.parseBooleanExpr();
@@ -185,6 +200,7 @@ export class Parser
 
     parseExpr(): void
     {
+        this.parseTree.push("PARSE - parseExpr()");
         this.cst.addNode("branch", "Expr");
         let currentToken = this.tokenStream[this.pos];
 
@@ -214,6 +230,7 @@ export class Parser
 
     parseIntExpr(): void
     {
+        this.parseTree.push("PARSE - parseIntExpr()");
         this.cst.addNode("branch", "IntExpr");
         this.match(["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]);
 
@@ -228,6 +245,7 @@ export class Parser
 
     parseStringExpr(): void
     {
+        this.parseTree.push("PARSE - parseStringExpr()");
         this.cst.addNode("branch", "StringExpr");
         this.match(["\""]);
         this.parseCharList();
@@ -237,6 +255,7 @@ export class Parser
 
     parseBooleanExpr(): void
     {
+        this.parseTree.push("PARSE - parseBooleanExpr()");
         this.cst.addNode("branch", "BooleanExpr");
         let currentToken = this.tokenStream[this.pos];
 
@@ -262,6 +281,7 @@ export class Parser
 
     parseId(): void
     {
+        this.parseTree.push("PARSE - parseID()");
         this.cst.addNode("branch", "Id");
         this.match(["a","b","c","d","e","f","g","h","i","j","k","l","m",
                     "n","o","p","q","r","s","t","u","v","w","x","y","z"]);
@@ -270,6 +290,7 @@ export class Parser
 
     parseCharList(): void
     {
+        this.parseTree.push("PARSE - parseCharList()");
         this.cst.addNode("branch", "CharList");
         let currentToken = this.tokenStream[this.pos];
 
