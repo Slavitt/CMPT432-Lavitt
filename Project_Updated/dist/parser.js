@@ -9,6 +9,7 @@ export class CST {
         this.root = null;
         this.current = null;
     }
+    // As seen from the Parse slide deck
     addNode(kind, name) {
         let n = new Node(name, kind, this.current);
         if (this.root == null) {
@@ -23,11 +24,13 @@ export class CST {
             this.current = n;
         }
     }
+    // As seen from the Parse slide deck
     moveUp() {
         if (this.current != null && this.current.parent != null) {
             this.current = this.current.parent;
         }
     }
+    // printTree() and traverse(): recursively prints the CST
     printTree() {
         if (this.root != null) {
             return this.traverse(this.root, 0);
@@ -52,6 +55,8 @@ export class CST {
         return outputTree;
     }
 }
+// Parser Class - recursive descent parser
+// Follows the structure from the Parse slide deck
 export class Parser {
     constructor() {
         this.cst = new CST();
@@ -60,6 +65,7 @@ export class Parser {
         this.pos = 0;
         this.parseTree = [];
     }
+    // Program production
     parseProgram(tokenStream) {
         this.parseTree.push("PARSE - parseProgram()");
         this.tokenStream = tokenStream;
@@ -68,6 +74,7 @@ export class Parser {
         this.match(["$"]);
         this.cst.moveUp();
     }
+    // Block production
     parseBlock() {
         this.parseTree.push("PARSE - parseBlock()");
         this.cst.addNode("branch", "Block");
@@ -76,6 +83,7 @@ export class Parser {
         this.match(["}"]);
         this.cst.moveUp();
     }
+    // StatementList productions
     parseStatementList() {
         this.parseTree.push("PARSE - parseStatementList()");
         this.cst.addNode("branch", "StatementList");
@@ -88,6 +96,7 @@ export class Parser {
         }
         this.cst.moveUp();
     }
+    // Statement productions
     parseStatement() {
         this.parseTree.push("PARSE - parseStatement()");
         this.cst.addNode("branch", "Statement");
@@ -115,6 +124,7 @@ export class Parser {
         }
         this.cst.moveUp();
     }
+    // PrintStatement production
     parsePrintStatement() {
         this.parseTree.push("PARSE - parsePrintStatement()");
         this.cst.addNode("branch", "PrintStatement");
@@ -124,6 +134,7 @@ export class Parser {
         this.match([")"]);
         this.cst.moveUp();
     }
+    // AssignmentStatement production
     parseAssignmentStatement() {
         this.parseTree.push("PARSE - parseAssignmentStatement()");
         this.cst.addNode("branch", "AssignmentStatement");
@@ -132,6 +143,7 @@ export class Parser {
         this.parseExpr();
         this.cst.moveUp();
     }
+    // VarDecl production
     parseVarDecl() {
         this.parseTree.push("PARSE - parseVarDecl()");
         this.cst.addNode("branch", "VarDecl");
@@ -139,6 +151,7 @@ export class Parser {
         this.parseId();
         this.cst.moveUp();
     }
+    // WhileStatement production
     parseWhileStatement() {
         this.parseTree.push("PARSE - parseWhileStatement()");
         this.cst.addNode("branch", "WhileStatement");
@@ -147,6 +160,7 @@ export class Parser {
         this.parseBlock();
         this.cst.moveUp();
     }
+    // IfStatement production
     parseIfStatement() {
         this.parseTree.push("PARSE - parseIfStatement()");
         this.cst.addNode("branch", "IfStatement");
@@ -155,6 +169,7 @@ export class Parser {
         this.parseBlock();
         this.cst.moveUp();
     }
+    // Expr productions
     parseExpr() {
         this.parseTree.push("PARSE - parseExpr()");
         this.cst.addNode("branch", "Expr");
@@ -176,6 +191,7 @@ export class Parser {
         }
         this.cst.moveUp();
     }
+    // IntExpr productions
     parseIntExpr() {
         this.parseTree.push("PARSE - parseIntExpr()");
         this.cst.addNode("branch", "IntExpr");
@@ -186,6 +202,7 @@ export class Parser {
         }
         this.cst.moveUp();
     }
+    // StringExpr production
     parseStringExpr() {
         this.parseTree.push("PARSE - parseStringExpr()");
         this.cst.addNode("branch", "StringExpr");
@@ -194,6 +211,7 @@ export class Parser {
         this.match(["\""]);
         this.cst.moveUp();
     }
+    // BooleanExpr productions
     parseBooleanExpr() {
         this.parseTree.push("PARSE - parseBooleanExpr()");
         this.cst.addNode("branch", "BooleanExpr");
@@ -213,6 +231,7 @@ export class Parser {
         }
         this.cst.moveUp();
     }
+    // Id production
     parseId() {
         this.parseTree.push("PARSE - parseID()");
         this.cst.addNode("branch", "Id");
@@ -220,6 +239,7 @@ export class Parser {
             "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"]);
         this.cst.moveUp();
     }
+    // CharList production (change to make recursive)
     parseCharList() {
         this.parseTree.push("PARSE - parseCharList()");
         this.cst.addNode("branch", "CharList");
@@ -242,6 +262,7 @@ export class Parser {
         } */
         this.cst.moveUp();
     }
+    // Match function (processes non-terminals)
     match(expected) {
         let currentToken = this.tokenStream[this.pos];
         if (expected.includes(currentToken.value)) {
