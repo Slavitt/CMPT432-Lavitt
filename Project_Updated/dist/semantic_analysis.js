@@ -57,19 +57,49 @@ export class Semantic {
             case "WhileStatement":
                 this.abstractWhileStatement(node);
                 break;
+            default:
+                for (const c of node.children) {
+                    this.visit(c);
+                }
+                break;
         }
     }
-    abstractWhileStatement(n) {
-    }
-    abstractIfStatement(n) {
-    }
-    abstractPrintStatement(n) {
-    }
-    abstractAssignmentStatement(n) {
+    abstractBlock(n) {
+        console.log("SEMANTIC - abstractBlock()");
+        this.ast.addNode("branch", "Block");
+        for (const c of n.children) {
+            this.visit(c);
+        }
+        this.ast.moveUp();
     }
     abstractVarDecl(n) {
+        this.ast.addNode("branch", "VarDecl");
+        let typeNode = this.findChild(n, "type");
+        let idNode = this.findChild(n, "id");
+        if (typeNode) {
+            this.ast.addNode("leaf", typeNode.name);
+        }
+        if (idNode) {
+            this.ast.addNode("leaf", idNode.name);
+        }
+        this.ast.moveUp();
     }
-    abstractBlock(n) {
+    abstractAssignmentStatement(n) {
+        this.ast.moveUp();
+    }
+    abstractPrintStatement(n) {
+        this.ast.moveUp();
+    }
+    abstractIfStatement(n) {
+        this.ast.moveUp();
+    }
+    abstractWhileStatement(n) {
+        this.ast.moveUp();
+    }
+    // Helper Functions
+    findChild(node, name) {
+        var _a;
+        return (_a = node.children.find(c => c.name === name)) !== null && _a !== void 0 ? _a : null;
     }
 }
 //# sourceMappingURL=semantic_analysis.js.map
