@@ -88,9 +88,7 @@ export class Semantic {
                 this.abstractWhileStatement(node);
                 break;
             default:
-                console.log(`Other node detected: ${node.name}`);
                 for (const c of node.children) {
-                    console.log(`Visiting node: ${c.name}`);
                     this.visit(c);
                 }
                 break;
@@ -104,7 +102,7 @@ export class Semantic {
         }
         this.ast.moveUp();
     }
-    // DONE with VarDecl
+    // VarDecl ------------------------------------------------
     abstractVarDecl(n) {
         this.ast.addNode("branch", "VarDecl");
         let typeNode = n.children[0];
@@ -113,83 +111,102 @@ export class Semantic {
         this.ast.addNode("leaf", idNode.name);
         this.ast.moveUp();
     }
+    // AssignmentStatement ------------------------------------------------
     abstractAssignmentStatement(n) {
         this.ast.addNode("branch", "AssignmentStatement");
         let idNode = n.children[0].children[0];
-        let valNode = this.findChild(n, "value");
-        if (idNode) {
-            this.ast.addNode("leaf", idNode.name);
-        }
-        if (valNode) {
-            this.ast.addNode("leaf", valNode.name);
-        }
+        this.ast.addNode("leaf", idNode.name);
+        this.findExpr(n.children[2]);
         this.ast.moveUp();
     }
     // DONE with PrintStatement
     abstractPrintStatement(n) {
         this.ast.addNode("branch", "PrintStatement");
-        let idNode = n.children[2];
-        if (idNode) {
-            this.ast.addNode("leaf", idNode.name);
-        }
+        this.findExpr(n.children[2]);
         this.ast.moveUp();
     }
+    // If Statement
     abstractIfStatement(n) {
         console.log("abstractIf()");
-        this.ast.addNode("branch", "IfStatement");
-        const boolExpr = this.findChildByKind(n, "BooleanExpr");
-        if (boolExpr) {
-            const typeNode = this.findChild(boolExpr, "type");
-            const idNode = this.findChild(boolExpr, "id");
-            if (typeNode && idNode) {
-                this.ast.addNode("branch", "isEq");
-                if (typeNode) {
-                    this.ast.addNode("leaf", typeNode.name);
-                }
-                if (idNode) {
-                    this.ast.addNode("leaf", idNode.name);
-                }
-                this.ast.moveUp();
-            }
-        }
-        const blockNode = this.findChildByKind(n, "Block");
-        if (blockNode) {
-            this.abstractBlock(blockNode);
-        }
+        this.ast.addNode("branch", "if");
+        this.findBooleanExpr(n.children[1]);
+        this.abstractBlock(n.children[2]);
         this.ast.moveUp();
     }
+    // While Statement
     abstractWhileStatement(n) {
         console.log("abstractWhile()");
-        this.ast.addNode("branch", "IfStatement");
-        const boolExpr = this.findChildByKind(n, "BooleanExpr");
-        if (boolExpr) {
-            const typeNode = this.findChild(boolExpr, "type");
-            const idNode = this.findChild(boolExpr, "id");
-            if (typeNode && idNode) {
-                this.ast.addNode("branch", "isEq");
-                if (typeNode) {
-                    this.ast.addNode("leaf", typeNode.name);
-                }
-                if (idNode) {
-                    this.ast.addNode("leaf", idNode.name);
-                }
-                this.ast.moveUp();
-            }
-        }
-        const blockNode = this.findChildByKind(n, "Block");
-        if (blockNode) {
-            this.abstractBlock(blockNode);
-        }
+        this.ast.addNode("branch", "while");
+        this.findExpr(n.children[1]);
+        this.ast.moveUp();
+        this.abstractBlock(n.children[2]);
         this.ast.moveUp();
     }
-    // Helper Functions
-    findChild(node, name) {
-        var _a;
-        return (_a = node.children.find(c => c.name === name)) !== null && _a !== void 0 ? _a : null;
+    // Helper Functions-------------------------------
+    findExpr(n) {
+        console.log("findExpr()");
+        // IntExpr ----------------------------------------------
+        if (n.name == "IntExpr") {
+            for (const c of n.children) {
+                if (c.kind == "leaf" && c.name != "+") {
+                    this.ast.addNode("leaf", c.name);
+                }
+                else if (c.name == "Expr") {
+                    this.findExpr(c);
+                }
+            }
+        }
+        // StringExpr ----------------------------------------------
+        else if (n.name == "StringExpr") {
+            const charList = n.children[1];
+            const str = this.concatCharList(charList);
+            this.ast.addNode("leaf", str);
+        }
+        // BooleanExpr ----------------------------------------------
+        else if (n.name == "BooleanExpr") {
+            /*if (n.children[0].kind == "leaf")
+            {
+                this.ast.addNode("leaf", n.children[0].name);
+            }
+            else
+            {
+                this.findExpr(n.children[1]); // left Expr
+                this.findExpr(n.children[3]); // right Expr
+            }*/
+            this.findBooleanExpr(n);
+        }
+        // Id ----------------------------------------------
+        else if (n.name == "Id") {
+            this.ast.addNode("leaf", n.children[0].name);
+        }
+        // Expr ----------------------------------------------
+        else if (n.name == "Expr") {
+            this.findExpr(n.children[0]);
+        }
     }
-    findChildByKind(node, kind) {
-        var _a;
-        return (_a = node.children.find(c => c.kind === kind)) !== null && _a !== void 0 ? _a : null;
+    concatCharList(n) {
+        let result = "";
+        for (const c of n.children) {
+            if (c.kind == "leaf") {
+                result += c.name;
+            }
+            else {
+                result += this.concatCharList(c);
+            }
+        }
+        return result;
+    }
+    findBooleanExpr(n) {
+        console.log("abstractBooleanExpr()");
+        if (n.children[0].name === "(") {
+            this.ast.addNode("branch", "isEq");
+            this.findExpr(n.children[1]); // left Expr
+            this.findExpr(n.children[3]); // right Expr
+            this.ast.moveUp();
+        }
+        else if (n.children[0].kind === "leaf") {
+            this.ast.addNode("leaf", n.children[0].name);
+        }
     }
 }
 /*
@@ -197,5 +214,34 @@ VarDecl: [type, id]
 AssignmentStatement: [id, "=", Expr]
 PrintStatement: ["print", "(", id, ")"]
 BooleanExpr: []
+
+    private findExpr(n: Node): Node
+    {
+        let ex: Node = n.children[0];
+
+        if (ex.name == "IntExpr")
+        {
+            if (ex.children.length == 3)
+            {
+                
+            }
+        }
+        else if (ex.name == "StringExpr")
+        {
+
+        }
+        else if (ex.name == "BooleanExpr")
+        {
+
+        }
+        else if (ex.name == "Id")
+        {
+
+        }
+        else
+        {
+            return ex;
+        }
+    }
  */ 
 //# sourceMappingURL=semantic_analysis.js.map
