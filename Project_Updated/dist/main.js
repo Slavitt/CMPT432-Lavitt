@@ -2,6 +2,7 @@
 // npx http-server . -c-1 to run server
 import { Lexer } from "./lexer.js";
 import { Parser } from "./parser.js";
+import { Semantic } from "./semantic_analysis.js";
 function startCompilation() {
     let program = document.getElementById("alert-input");
     let output = document.getElementById("alert-output");
@@ -61,7 +62,14 @@ function startCompilation() {
     }
     else {
         output.value += "\nPARSER - parse success -----------------";
+        parseSuccess = true;
         console.log(_Parser.cst);
+    }
+    if (parseSuccess == true) {
+        let _Sem = new Semantic(_Parser.cst);
+        _Sem.ast = _Sem.startSem();
+        console.log(_Sem.ast);
+        output.value += "\nAST TREE - \n" + _Sem.ast.printTree();
     }
     output.scrollTop = output.scrollHeight;
 }

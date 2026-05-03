@@ -22,6 +22,7 @@ export class Lexer {
         this.line = 1;
         this.tokenList = ["int", "string", "boolean", "while", "if", "false", "true", "print", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "+", "=", "==", "!=", "\"", "(", ")", "{", "}", "/*", "*/", "$", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", '"'];
         this.types = ["VARIABLE TYPE", "VARIABLE TYPE", "VARIABLE TYPE", "WHILE", "IF", "BOOL_VAL", "BOOL_VAL", "PRINT", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ID", "ADD", "ASSIGN", "BOOL_OP", "BOOL_OP", "QUOTE", "O-PAREN", "C-PAREN", "O-BRACE", "C-BRACE", "OPEN COMMENT", "CLOSE COMMENT", "EOP", "DIGIT", "DIGIT", "DIGIT", "DIGIT", "DIGIT", "DIGIT", "DIGIT", "DIGIT", "DIGIT", "DIGIT", "QUOTE"];
+        this.characterList = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
     }
     generateTokens(input) {
         console.log("hello from lexer.ts");
@@ -204,7 +205,7 @@ export class Lexer {
                 while (inQuote == true) {
                     currentChar = program[this.pos];
                     if (this.isDigit(currentChar) || this.isChar(currentChar)) {
-                        this.generateToken(currentChar);
+                        this.generateCharToken(currentChar);
                         this.advance();
                     }
                     else if (currentChar == '"') {
@@ -273,6 +274,18 @@ export class Lexer {
     generateKeywordToken(s, i) {
         let ref = this.tokenList.indexOf(s);
         let t = new Token(this.types[ref], this.tokenList[ref], this.line, i);
+        this.tokenStream.push(t);
+        console.log(`LEX - ${t.type} [ ${t.value} ] found at (${t.line},${t.index})`);
+    }
+    generateCharToken(s) {
+        let type;
+        if (this.isChar(s) || s == " ") {
+            type = "T_CHAR";
+        }
+        else {
+            type = "T_DIGIT";
+        }
+        let t = new Token(type, s, this.line, this.index);
         this.tokenStream.push(t);
         console.log(`LEX - ${t.type} [ ${t.value} ] found at (${t.line},${t.index})`);
     }

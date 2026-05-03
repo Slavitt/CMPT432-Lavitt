@@ -224,15 +224,22 @@ export class Parser {
         this.parseTree.push("PARSE - parseCharList()");
         this.cst.addNode("branch", "CharList");
         let currentToken = this.tokenStream[this.pos];
-        if (currentToken.type == "ID") {
+        while (currentToken.type == "T_CHAR") {
             this.match(["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m",
-                "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"]);
+                "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", " "]);
+            currentToken = this.tokenStream[this.pos];
+        }
+        /* if (currentToken.type == "ID")
+        {
+            this.match(["a","b","c","d","e","f","g","h","i","j","k","l","m",
+                        "n","o","p","q","r","s","t","u","v","w","x","y","z"]);
             this.parseCharList();
         }
-        else if (currentToken.type == "SPACE") {
+        else if (currentToken.type == "SPACE")
+        {
             this.match([" "]);
             this.parseCharList();
-        }
+        } */
         this.cst.moveUp();
     }
     match(expected) {
