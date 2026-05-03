@@ -58,7 +58,7 @@ function startCompilation(): void {
 	}
 
 
-	/* PARSE ----------------------------------------------------------------------
+	// PARSE ----------------------------------------------------------------------
 	let _Parser = new Parser();
 	let parseSuccess = false;
 
@@ -100,7 +100,6 @@ function startCompilation(): void {
 		console.log(_Sem.ast);
 		output.value += "\nAST TREE - \n" + _Sem.ast.printTree();
 	}
-	*/
 
 
 

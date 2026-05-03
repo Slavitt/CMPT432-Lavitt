@@ -1,6 +1,8 @@
 import { Node } from "./Node.js";
 import { CST } from "./parser.js";
 
+// AST Class - pretty much the same thing as the CST
+// if you have time: create Tree.ts?
 export class AST
 {
     root: Node | null;
@@ -83,12 +85,14 @@ export class Semantic
     cst: CST;
     ast: AST;
 
+    // Uses the CST from parse as an attribute
     constructor(cst: CST)
     {
         this.cst = cst;
         this.ast = new AST();
     }
 
+    // begins traversing the CST to pick out the "good parts"
     startSem(): AST
     {
         console.log("time for semantic analysis!");
@@ -99,8 +103,7 @@ export class Semantic
         return this.ast;
     }
 
-    // Recursively parses through the CST
-    // starting at the root
+    // Recursively parses through the CST starting at the root
     private visit(node: Node): void
     {
         switch(node.name)
@@ -135,6 +138,8 @@ export class Semantic
                 this.abstractWhileStatement(node);
                 break;
 
+            // If the node is not one of the above statements,
+            // it is skipped over
             default:
                 for (const c of node.children)
                 {
@@ -144,12 +149,14 @@ export class Semantic
         }
     }
 
+    // Creates a Block node in the AST
     private abstractBlock(n: Node) 
     {
         console.log("SEMANTIC - abstractBlock()");
 
         this.ast.addNode("branch", "Block");
 
+        // visits each child node of the Block node from the CST
         for (const c of n.children)
         {
             this.visit(c);
@@ -158,7 +165,7 @@ export class Semantic
         this.ast.moveUp();
     }
     
-    // VarDecl ------------------------------------------------
+    // Creates a VarDecl node in the AST and leaf nodes for Type and Id
     private abstractVarDecl(n: Node) 
     {
         this.ast.addNode("branch", "VarDecl");
@@ -172,7 +179,7 @@ export class Semantic
         this.ast.moveUp();
     }
 
-    // AssignmentStatement ------------------------------------------------
+    // Creates an AssignmentStatement node in the AST and leaf nodes for Id and Value
     private abstractAssignmentStatement(n: Node) 
     {
         this.ast.addNode("branch", "AssignmentStatement");
@@ -185,7 +192,7 @@ export class Semantic
         this.ast.moveUp();
     }
 
-    // DONE with PrintStatement
+    // Creates a PrintStatement node in the AST and a leaf node for Id
     private abstractPrintStatement(n: Node) 
     {
         this.ast.addNode("branch", "PrintStatement");
@@ -195,7 +202,7 @@ export class Semantic
         this.ast.moveUp();
     }
 
-    // If Statement
+    // Creates an IfStatement node in the AST and branch nodes for isEq and a Block
     private abstractIfStatement(n: Node) 
     {
         console.log("abstractIf()");
@@ -208,7 +215,7 @@ export class Semantic
         this.ast.moveUp();
     }
 
-    // While Statement
+    // Creates an WhileStatement node in the AST and branch nodes for isEq and a Block
     private abstractWhileStatement(n: Node) 
     {
         console.log("abstractWhile()");
@@ -224,8 +231,9 @@ export class Semantic
         this.ast.moveUp();
     }
 
-    // Helper Functions-------------------------------
+    // Helper Functions---------------------------------------------------------------------------------------------
 
+    // Searches for and returns the correct Expr type
     private findExpr(n: Node)
     {
         console.log("findExpr()");
@@ -257,16 +265,6 @@ export class Semantic
         // BooleanExpr ----------------------------------------------
         else if (n.name == "BooleanExpr")
         {
-            /*if (n.children[0].kind == "leaf")
-            {
-                this.ast.addNode("leaf", n.children[0].name);
-            }
-            else
-            {
-                this.findExpr(n.children[1]); // left Expr
-                this.findExpr(n.children[3]); // right Expr
-            }*/
-
             this.findBooleanExpr(n);
         }
 
@@ -281,8 +279,9 @@ export class Semantic
         {
             this.findExpr(n.children[0]);
         }
-}
+    }
 
+    // Assembles a string from the children of a CharList
     private concatCharList(n: Node): string
     {
         let result = "";
@@ -301,6 +300,8 @@ export class Semantic
         return result;
     }
 
+    // Helper function to the helper function findExpr()
+    // (help-ception?)
     private findBooleanExpr(n: Node)
     {
         console.log("abstractBooleanExpr()");
@@ -318,39 +319,3 @@ export class Semantic
         }
     }
 }
-
-/*
-VarDecl: [type, id]
-AssignmentStatement: [id, "=", Expr]
-PrintStatement: ["print", "(", id, ")"]
-BooleanExpr: []
-
-    private findExpr(n: Node): Node
-    {
-        let ex: Node = n.children[0];
-
-        if (ex.name == "IntExpr")
-        {
-            if (ex.children.length == 3)
-            {
-                
-            }
-        }
-        else if (ex.name == "StringExpr")
-        {
-
-        }
-        else if (ex.name == "BooleanExpr")
-        {
-
-        }
-        else if (ex.name == "Id")
-        {
-
-        }
-        else
-        {
-            return ex;
-        }
-    }
- */

@@ -1,6 +1,8 @@
 // tsc to compile
 // npx http-server . -c-1 to run server
 import { Lexer } from "./lexer.js";
+import { Parser } from "./parser.js";
+import { Semantic } from "./semantic_analysis.js";
 function startCompilation() {
     let program = document.getElementById("alert-input");
     let output = document.getElementById("alert-output");
@@ -39,49 +41,36 @@ function startCompilation() {
         output.value += "\nLEXER - lex success -----------------";
         lexSuccess = true;
     }
-    /* PARSE ----------------------------------------------------------------------
+    // PARSE ----------------------------------------------------------------------
     let _Parser = new Parser();
     let parseSuccess = false;
-
     output.value += "\nPARSER - beginning parse... -----------------";
-
-    if (lexSuccess == true)
-    {
+    if (lexSuccess == true) {
         console.log("let's parse!");
         _Parser.parseProgram(tokenStream);
     }
-
-    for (let i = 0; i < _Parser.parseTree.length; i++)
-    {
+    for (let i = 0; i < _Parser.parseTree.length; i++) {
         output.value += `\n${_Parser.parseTree[i]}`;
     }
-
     output.value += `\n${_Parser.cst.printTree()}`;
-
-    if (_Parser.errorStream.length > 0)
-    {
-        for (let i = 0; i < _Parser.errorStream.length; i++)
-        {
+    if (_Parser.errorStream.length > 0) {
+        for (let i = 0; i < _Parser.errorStream.length; i++) {
             output.value += `\n${_Parser.errorStream[i]}`;
         }
         output.value += `\n\nPARSE COMPLETE with ${_Parser.errorStream.length} errors`;
         output.value += `\nParse Failed - error(s) detected`;
     }
-    else
-    {
+    else {
         output.value += "\nPARSER - parse success -----------------";
         parseSuccess = true;
         console.log(_Parser.cst);
     }
-
-    if (parseSuccess == true)
-    {
-        let _Sem: Semantic = new Semantic(_Parser.cst);
+    if (parseSuccess == true) {
+        let _Sem = new Semantic(_Parser.cst);
         _Sem.ast = _Sem.startSem();
         console.log(_Sem.ast);
         output.value += "\nAST TREE - \n" + _Sem.ast.printTree();
     }
-    */
     output.scrollTop = output.scrollHeight;
 }
 function init() {

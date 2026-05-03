@@ -68,6 +68,8 @@ export class Lexer
                 while (inComment && this.pos + 1 <= program.length)
                 {
                     currentChar = program[this.pos];
+
+                    // Detects the end of the comment and advances through it
                     if (currentChar == '*' && this.nextToken(program, this.pos) == '/')
                     {
                         inComment = false;
@@ -75,6 +77,9 @@ export class Lexer
                         this.advance();
                         this.advance();
                     }
+
+                    // Ignores new lines found inside the comment, but prints to the
+                    // console just to be safe.
                     else if (currentChar == '\n')
                     {
                         console.log(`new line in comment at line ${this.line}, index ${this.index}`);
@@ -82,6 +87,7 @@ export class Lexer
                         this.index = 1;
                     }
 
+                    // Warning for unterminated comments
                     if (this.pos >= program.length)
                     {
                         this.warningStream.push("WARNING: Unterminated comment. Fix this!");
@@ -263,6 +269,7 @@ export class Lexer
             }
 
             // Quote?
+                                // MOVE THE CHAR CHECKING TO PARSE
             else if (currentChar == '"')
             {
                 this.generateToken(currentChar);
@@ -273,7 +280,7 @@ export class Lexer
                 while (inQuote == true)
                 {
                     currentChar = program[this.pos];
-                    if (this.isDigit(currentChar) || this.isChar(currentChar) || currentChar == ' ')
+                    if (this.isChar(currentChar) || currentChar == ' ')
                     {
                         this.generateCharToken(currentChar);
                         this.advance();
@@ -291,7 +298,7 @@ export class Lexer
                     }
                     else
                     {
-                        this.errorStream.push(`ERROR: unidentified character [ ${currentChar} ] at (${this.line},${this.index})`);
+                        this.errorStream.push(`ERROR: unidentified character [ ${currentChar} ] in quote at (${this.line},${this.index})`);
                         this.advance();
                     }
 
@@ -335,33 +342,34 @@ export class Lexer
         return this.tokenStream;
     }
 
-    // Helper functions
+    // Helper functions -------------------------------------------
+
+    // Look-ahead to the next character in the program
     public nextToken(program: String, position: number): String
     {
         return program[position + 1];
     }
 
+    // Moves to the next index in the program
     public advance(): void
     {
         this.pos++;
         this.index++;
     }
 
+    // Checks if the current token is a digit
     public isDigit(c: string): boolean
     {
         return c.charCodeAt(0) >= 48 && c.charCodeAt(0) <= 57;
     }
 
+    // Checks if the current token is a character
     public isChar(c: string): boolean
     {  
         return c.charCodeAt(0) >= 97 && c.charCodeAt(0) <= 122;
     }
 
-    public handleKeyword(): void
-    {
-
-    }
-
+    // Pushes a token to the stream
     public generateToken(s: string): void
     {
         let ref: number = this.tokenList.indexOf(s);
@@ -371,6 +379,7 @@ export class Lexer
         console.log(`LEX - ${t.type} [ ${t.value} ] found at (${t.line},${t.index})`);
     }
 
+    // Pushes a keyword token to the stream
     public generateKeywordToken(s: string, i: number): void
     {
         let ref: number = this.tokenList.indexOf(s);
@@ -380,6 +389,7 @@ export class Lexer
         console.log(`LEX - ${t.type} [ ${t.value} ] found at (${t.line},${t.index})`);
     }
 
+    // Pushes a character token to the stream
     public generateCharToken(s: string): void
     {
         let type: string;
