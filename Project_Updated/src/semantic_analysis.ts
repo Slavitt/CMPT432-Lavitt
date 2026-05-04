@@ -1,6 +1,6 @@
 import { Node } from "./Node.js";
 import { CST } from "./parser.js";
-
+import { SymbolEntry, Scope, SymbolTable } from "./SymbolTable.js";
 // AST Class - pretty much the same thing as the CST
 // if you have time: create Tree.ts?
 export class AST
@@ -102,6 +102,8 @@ export class Semantic
         }
         return this.ast;
     }
+
+    // AST GENERATION ---------------------------------------------------------------------------------
 
     // Recursively parses through the CST starting at the root
     private visit(node: Node): void
@@ -231,7 +233,7 @@ export class Semantic
         this.ast.moveUp();
     }
 
-    // Helper Functions---------------------------------------------------------------------------------------------
+    // Helper Functions for AST Generation
 
     // Searches for and returns the correct Expr type
     private findExpr(n: Node)
@@ -318,4 +320,24 @@ export class Semantic
             this.ast.addNode("leaf", n.children[0].name);
         }
     }
+
+
+    // SYMBOL TABLE GENERATION -------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }

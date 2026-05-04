@@ -63,6 +63,7 @@ export class Semantic {
         }
         return this.ast;
     }
+    // AST GENERATION ---------------------------------------------------------------------------------
     // Recursively parses through the CST starting at the root
     visit(node) {
         switch (node.name) {
@@ -149,7 +150,7 @@ export class Semantic {
         this.abstractBlock(n.children[2]);
         this.ast.moveUp();
     }
-    // Helper Functions---------------------------------------------------------------------------------------------
+    // Helper Functions for AST Generation
     // Searches for and returns the correct Expr type
     findExpr(n) {
         console.log("findExpr()");
