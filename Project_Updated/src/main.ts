@@ -96,9 +96,10 @@ function startCompilation(): void {
 	if (parseSuccess == true)
 	{
 		let _Sem: Semantic = new Semantic(_Parser.cst);
-		_Sem.ast = _Sem.startSem();
+		_Sem.startSem();
 		console.log(_Sem.ast);
-		output.value += "\nAST TREE - \n" + _Sem.ast.printTree();
+		output.value += "\nAST - \n" + _Sem.ast.printTree();
+		output.value += "\n\nSYMBOL TABLE - \n" + _Sem.symbolTable.printTable();
 	}
 
 

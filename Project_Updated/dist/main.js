@@ -67,9 +67,10 @@ function startCompilation() {
     }
     if (parseSuccess == true) {
         let _Sem = new Semantic(_Parser.cst);
-        _Sem.ast = _Sem.startSem();
+        _Sem.startSem();
         console.log(_Sem.ast);
-        output.value += "\nAST TREE - \n" + _Sem.ast.printTree();
+        output.value += "\nAST - \n" + _Sem.ast.printTree();
+        output.value += "\n\nSYMBOL TABLE - \n" + _Sem.symbolTable.printTable();
     }
     output.scrollTop = output.scrollHeight;
 }

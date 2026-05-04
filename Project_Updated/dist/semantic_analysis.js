@@ -1,4 +1,5 @@
 import { Node } from "./Node.js";
+import { SymbolTable } from "./SymbolTable.js";
 // AST Class - pretty much the same thing as the CST
 // if you have time: create Tree.ts?
 export class AST {
@@ -54,18 +55,20 @@ export class Semantic {
     constructor(cst) {
         this.cst = cst;
         this.ast = new AST();
+        this.symbolTable = new SymbolTable();
     }
     // begins traversing the CST to pick out the "good parts"
     startSem() {
         console.log("time for semantic analysis!");
         if (this.cst.root != null) {
-            this.visit(this.cst.root);
+            this.abstractVisit(this.cst.root);
         }
-        return this.ast;
+        this.genSymbolTable();
+        console.log(this.symbolTable);
     }
     // AST GENERATION ---------------------------------------------------------------------------------
     // Recursively parses through the CST starting at the root
-    visit(node) {
+    abstractVisit(node) {
         switch (node.name) {
             case "Block":
                 console.log("block detected");
@@ -95,7 +98,7 @@ export class Semantic {
             // it is skipped over
             default:
                 for (const c of node.children) {
-                    this.visit(c);
+                    this.abstractVisit(c);
                 }
                 break;
         }
@@ -104,9 +107,9 @@ export class Semantic {
     abstractBlock(n) {
         console.log("SEMANTIC - abstractBlock()");
         this.ast.addNode("branch", "Block");
-        // visits each child node of the Block node from the CST
+        // abstractVisits each child node of the Block node from the CST
         for (const c of n.children) {
-            this.visit(c);
+            this.abstractVisit(c);
         }
         this.ast.moveUp();
     }
@@ -210,6 +213,145 @@ export class Semantic {
         else if (n.children[0].kind === "leaf") {
             this.ast.addNode("leaf", n.children[0].name);
         }
+    }
+    // SYMBOL TABLE GENERATION -------------------------------------------------------------------
+    genSymbolTable() {
+        console.log("building symbol table!");
+        if (this.ast.root !== null) {
+            this.symbolVisit(this.ast.root);
+        }
+        this.symbolCheckWarnings();
+        return this.symbolTable;
+    }
+    symbolVisit(node) {
+        switch (node.name) {
+            case "Block":
+                this.symbolVisitBlock(node);
+                break;
+            case "VarDecl":
+                this.symbolVisitVarDecl(node);
+                break;
+            case "AssignmentStatement":
+                this.symbolVisitAssignmentStatement(node);
+                break;
+            case "PrintStatement":
+                this.symbolVisitPrintStatement(node);
+                break;
+            case "if":
+            case "while":
+                this.symbolVisitIfWhile(node);
+                break;
+            case "isEq":
+                this.symbolVisitIsEq(node);
+                break;
+            default:
+                for (const c of node.children) {
+                    this.symbolVisit(c);
+                }
+                break;
+        }
+    }
+    symbolVisitBlock(node) {
+        console.log("symbolVisitBlock()");
+        this.symbolTable.openScope();
+        for (const c of node.children) {
+            this.symbolVisit(c);
+        }
+        this.symbolTable.closeScope();
+    }
+    symbolVisitVarDecl(node) {
+        console.log("symbolVisitVarDecl()");
+        const type = node.children[0].name;
+        const id = node.children[1].name;
+        if (this.symbolTable.current.lookup(id) !== null) {
+            this.symbolThrowError(`Error: variable '${id}' already declared in this scope`);
+            console.log(`Error: variable '${id}' already declared in this scope`);
+        }
+        this.symbolTable.current.addEntry(id, type);
+    }
+    symbolVisitAssignmentStatement(node) {
+        console.log("symbolVisitAssignmentStatement()");
+        const id = node.children[0].name;
+        const entry = this.symbolTable.current.lookupAll(id);
+        if (entry === null) {
+            this.symbolThrowError(`Error: variable '${id}' used before declaration`);
+            console.log(`Error: variable '${id}' used before declaration`);
+        }
+        for (let i = 1; i < node.children.length; i++) {
+            const valueNode = node.children[i];
+            const valueEntry = this.symbolTable.current.lookupAll(valueNode.name);
+            if (valueEntry !== null) {
+                if (valueEntry.type !== entry.type) {
+                    this.symbolThrowError(`Error: type mismatch — cannot assign '${valueEntry.type}' to '${entry.type}' for variable '${id}'`);
+                    console.log("Error: type mismatch");
+                }
+                valueEntry.isUsed = true;
+            }
+        }
+        entry.isInitialized = true;
+    }
+    symbolVisitPrintStatement(node) {
+        console.log("symbolVisitPrintStatement()");
+        const valueNode = node.children[0];
+        const entry = this.symbolTable.current.lookupAll(valueNode.name);
+        if (entry === null) {
+            this.symbolThrowError(`Error: variable '${valueNode.name}' used before declaration`);
+            console.log(`Error: variable '${valueNode.name}' used before declaration`);
+        }
+        entry.isUsed = true;
+    }
+    symbolVisitIfWhile(node) {
+        console.log("symbolVisitIfWhile()");
+        for (const c of node.children) {
+            this.symbolVisit(c);
+        }
+    }
+    symbolVisitIsEq(node) {
+        console.log("symbolVisitIsEq()");
+        const entries = [];
+        for (const c of node.children) {
+            if (c.name === "isEq") {
+                this.symbolVisitIsEq(c);
+            }
+            else if (c.kind === "leaf") {
+                const entry = this.symbolTable.current.lookupAll(c.name);
+                if (entry !== null) {
+                    entry.isUsed = true;
+                    entries.push(entry);
+                }
+            }
+        }
+        if (entries.length === 2 && entries[0] !== null && entries[1] !== null) {
+            if (entries[0].type !== entries[1].type) {
+                this.symbolThrowError(`Error: type mismatch — cannot compare '${entries[0].type}' with '${entries[1].type}'`);
+                console.log("Error: type mismatch");
+            }
+        }
+    }
+    symbolCheckWarnings() {
+        if (this.symbolTable.root !== null) {
+            this.symbolCheckScopeWarnings(this.symbolTable.root);
+        }
+    }
+    symbolCheckScopeWarnings(scope) {
+        for (const [id, entry] of scope.table) {
+            if (!entry.isInitialized && !entry.isUsed) {
+                this.symbolTable.warnings.push(`Warning: variable '${id}' declared but never used`);
+            }
+            else if (!entry.isInitialized) {
+                this.symbolTable.warnings.push(`Warning: variable '${id}' used without being initialized`);
+            }
+            else if (!entry.isUsed) {
+                this.symbolTable.warnings.push(`Warning: variable '${id}' declared and initialized but never used elsewhere`);
+            }
+        }
+        for (const child of scope.children) {
+            this.symbolCheckScopeWarnings(child);
+        }
+    }
+    symbolThrowError(message) {
+        this.symbolTable.errors.push(message);
+        throw new Error(message);
     }
 }
 //# sourceMappingURL=semantic_analysis.js.map
