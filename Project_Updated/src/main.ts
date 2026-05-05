@@ -62,11 +62,10 @@ function startCompilation(): void {
 	let _Parser = new Parser();
 	let parseSuccess = false;
 
-	output.value += "\n\nPARSER - beginning parse... -----------------";
-
 	// Begins the parse if the lex was successful
 	if (lexSuccess == true)
 	{
+		output.value += "\n\nPARSER - beginning parse... -----------------";
 		console.log("let's parse!");
 		_Parser.parseProgram(tokenStream);
 
