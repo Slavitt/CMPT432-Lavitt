@@ -298,7 +298,9 @@ export class Semantic {
             this.symbolThrowError(`Error: variable '${valueNode.name}' used before declaration`);
             console.log(`Error: variable '${valueNode.name}' used before declaration`);
         }
-        entry.isUsed = true;
+        else {
+            entry.isUsed = true;
+        }
     }
     symbolVisitIfWhile(node) {
         console.log("symbolVisitIfWhile()");
@@ -351,7 +353,6 @@ export class Semantic {
     }
     symbolThrowError(message) {
         this.symbolTable.errors.push(message);
-        throw new Error(message);
     }
 }
 //# sourceMappingURL=semantic_analysis.js.map

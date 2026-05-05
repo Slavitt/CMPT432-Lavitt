@@ -41,36 +41,57 @@ function startCompilation() {
         output.value += "\nLEXER - lex success -----------------";
         lexSuccess = true;
     }
-    // PARSE ----------------------------------------------------------------------
+    // PARSE ------------------------------------------------------------------------------------
     let _Parser = new Parser();
     let parseSuccess = false;
-    output.value += "\nPARSER - beginning parse... -----------------";
+    output.value += "\n\nPARSER - beginning parse... -----------------";
+    // Begins the parse if the lex was successful
     if (lexSuccess == true) {
         console.log("let's parse!");
         _Parser.parseProgram(tokenStream);
-    }
-    for (let i = 0; i < _Parser.parseTree.length; i++) {
-        output.value += `\n${_Parser.parseTree[i]}`;
-    }
-    output.value += `\n${_Parser.cst.printTree()}`;
-    if (_Parser.errorStream.length > 0) {
-        for (let i = 0; i < _Parser.errorStream.length; i++) {
-            output.value += `\n${_Parser.errorStream[i]}`;
+        // Prints when
+        for (let i = 0; i < _Parser.parseTree.length; i++) {
+            output.value += `\n${_Parser.parseTree[i]}`;
         }
-        output.value += `\n\nPARSE COMPLETE with ${_Parser.errorStream.length} errors`;
-        output.value += `\nParse Failed - error(s) detected`;
-    }
-    else {
-        output.value += "\nPARSER - parse success -----------------";
-        parseSuccess = true;
-        console.log(_Parser.cst);
-    }
-    if (parseSuccess == true) {
-        let _Sem = new Semantic(_Parser.cst);
-        _Sem.startSem();
-        console.log(_Sem.ast);
-        output.value += "\nAST - \n" + _Sem.ast.printTree();
-        output.value += "\n\nSYMBOL TABLE - \n" + _Sem.symbolTable.printTable();
+        // Prints the parse tree after the parse succeeds
+        output.value += `\n${_Parser.cst.printTree()}`;
+        if (_Parser.errorStream.length > 0) {
+            for (let i = 0; i < _Parser.errorStream.length; i++) {
+                output.value += `\n${_Parser.errorStream[i]}`;
+            }
+            output.value += `\n\nPARSE COMPLETE with ${_Parser.errorStream.length} errors`;
+            output.value += `\nParse Failed - error(s) detected`;
+        }
+        else {
+            output.value += "\nPARSER - parse success -----------------";
+            parseSuccess = true;
+            console.log(_Parser.cst);
+        }
+        // SEMANTIC ANALYSIS -------------------------------------------------------------
+        if (parseSuccess == true) {
+            output.value += "\n\nSEMANTIC - beginning semantic analysis... -------------";
+            // create semantic analysis object and initialize success variable
+            let _Sem = new Semantic(_Parser.cst);
+            let semanticSuccess = false;
+            _Sem.startSem();
+            console.log(_Sem.ast);
+            console.log(_Sem.symbolTable.printTable());
+            // Checks for any errors and prints them out
+            if (_Sem.symbolTable.errors.length > 0) {
+                for (let i = 0; i < _Sem.symbolTable.errors.length; i++) {
+                    output.value += `\n${_Sem.symbolTable.errors[i]}`;
+                }
+                output.value += `\Semantic Analysis Failed - ${_Sem.symbolTable.errors.length} error(s) detected`;
+            }
+            else // if there are no errors, proceed to code gen!
+             {
+                output.value += "\nSEMANTIC - success -----------------";
+                semanticSuccess = true;
+                //console.log(_Parser.cst);
+            }
+            output.value += "\nAST - \n" + _Sem.ast.printTree();
+            output.value += "\n\nSYMBOL TABLE - \n" + _Sem.symbolTable.printTable();
+        }
     }
     output.scrollTop = output.scrollHeight;
 }

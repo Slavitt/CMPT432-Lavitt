@@ -453,8 +453,12 @@ export class Semantic
             this.symbolThrowError(`Error: variable '${valueNode.name}' used before declaration`);
             console.log(`Error: variable '${valueNode.name}' used before declaration`)
         }
+        else
+        {
+            entry!.isUsed = true;
+        }
 
-        entry!.isUsed = true;
+        
     }
 
     private symbolVisitIfWhile(node: Node): void
@@ -536,7 +540,6 @@ export class Semantic
     private symbolThrowError(message: string): void
     {
         this.symbolTable.errors.push(message);
-        throw new Error(message);
     }
 
 

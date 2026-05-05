@@ -334,6 +334,8 @@ export class Lexer
         {
             console.log(input.substring(input.length - 1));
             this.warningStream.push("WARNING: EOP symbol not detected");
+            input = input.trim() + " $";
+            this.generateToken("$");
         }
 
         console.log(`output is ${input}`);
