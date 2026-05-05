@@ -5,13 +5,15 @@ import { Lexer } from "./lexer.js";
 import { Parser } from "./parser.js";
 import { Semantic } from "./semantic_analysis.js";
 
-function startCompilation(): void {
+function startCompilation(): void 
+{
 	let program = document.getElementById("alert-input") as HTMLInputElement;
 	let output = document.getElementById("alert-output") as HTMLTextAreaElement;
 	
 	let message = program?.value.trim();
 
-	if (output.value.length > 0) {
+	if (output.value.length > 0) 
+	{
 		output.value += "\n";
 		output.value = "";
 	}
@@ -25,13 +27,13 @@ function startCompilation(): void {
 	let tokenStream = _Lexer.generateTokens(message);
 	let lexSuccess = false;
 
-	// Outputs the token stream --------------------------
+	// Outputs the token stream 
 	for (let i = 0; i < tokenStream.length; i++)
 	{
 		output.value += `\nLEX - ${tokenStream[i].type} [  ${tokenStream[i].value} ] found at (${tokenStream[i].line},${tokenStream[i].index})`;
 	}
 
-	// Outputs the warnings, if there are any --------------------------
+	// Outputs the warnings, if there are any
 	if (_Lexer.warningStream.length > 0)
 	{
 		for (let i = 0; i < _Lexer.warningStream.length; i++)
@@ -69,14 +71,11 @@ function startCompilation(): void {
 		console.log("let's parse!");
 		_Parser.parseProgram(tokenStream);
 
-		// Prints when
+	// Prints the traversal of the production rules used to generate the CST
 	for (let i = 0; i < _Parser.parseTree.length; i++)
 	{
 		output.value += `\n${_Parser.parseTree[i]}`;
 	}
-
-	// Prints the parse tree after the parse succeeds
-	output.value += `\n${_Parser.cst.printTree()}`;
 
 	if (_Parser.errorStream.length > 0)
 	{
@@ -84,14 +83,18 @@ function startCompilation(): void {
 		{
 			output.value += `\n${_Parser.errorStream[i]}`;
 		}
-		output.value += `\n\nPARSE COMPLETE with ${_Parser.errorStream.length} errors`;
-		output.value += `\nParse Failed - error(s) detected`;
+		// output.value += `\n\nPARSE COMPLETE with ${_Parser.errorStream.length} errors`;
+		output.value += `\nParse Failed - ${_Parser.errorStream.length} error(s) detected`;
 	}
 	else
 	{
-		output.value += "\nPARSER - parse success -----------------";
+		output.value += "\n\nPARSER - parse success";
+		
+		// Prints the parse tree after the parse succeeds
+		output.value += "\n\nCONCRETE SYNTAX TREE"
+		output.value += `\n${_Parser.cst.printTree()}`;
+		
 		parseSuccess = true;
-		console.log(_Parser.cst);
 	}
 
 
@@ -123,11 +126,11 @@ function startCompilation(): void {
 		{
 			output.value += "\nSEMANTIC - success -----------------";
 			semanticSuccess = true;
-			//console.log(_Parser.cst);
+			output.value += "\nAST - \n" + _Sem.ast.printTree();
+			output.value += "\n\nSYMBOL TABLE - \n" + _Sem.symbolTable.printTable();
 		}
 
-		output.value += "\nAST - \n" + _Sem.ast.printTree();
-		output.value += "\n\nSYMBOL TABLE - \n" + _Sem.symbolTable.printTable();
+
 	}
 	}
 
