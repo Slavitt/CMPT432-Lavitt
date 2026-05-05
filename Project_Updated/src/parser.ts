@@ -94,14 +94,14 @@ export class Parser
     tokenStream: Token[] = [];
     errorStream: string[] = [];
     pos: number = 0;
-    parseTree: string[] = [];
+    cstStepTracer: string[] = [];
     
     constructor() { }
 
     // Program production
     parseProgram(tokenStream: Token[]): void
     {
-        this.parseTree.push("PARSE - parseProgram()");
+        this.cstStepTracer.push("PARSE - parseProgram()");
         this.tokenStream = tokenStream;
         this.cst.addNode("root", "Program");
         this.parseBlock();
@@ -112,7 +112,7 @@ export class Parser
     // Block production
     parseBlock(): void
     {
-        this.parseTree.push("PARSE - parseBlock()");
+        this.cstStepTracer.push("PARSE - parseBlock()");
         this.cst.addNode("branch", "Block");
         this.match(["{"]);
         this.parseStatementList();
@@ -123,7 +123,7 @@ export class Parser
     // StatementList productions
     parseStatementList(): void
     {
-        this.parseTree.push("PARSE - parseStatementList()");
+        this.cstStepTracer.push("PARSE - parseStatementList()");
         this.cst.addNode("branch", "StatementList");
         let currentToken = this.tokenStream[this.pos];
 
@@ -141,7 +141,7 @@ export class Parser
     // Statement productions
     parseStatement(): void
     {
-        this.parseTree.push("PARSE - parseStatement()");
+        this.cstStepTracer.push("PARSE - parseStatement()");
         this.cst.addNode("branch", "Statement");
         let currentToken = this.tokenStream[this.pos];
 
@@ -180,7 +180,7 @@ export class Parser
     // PrintStatement production
     parsePrintStatement(): void
     {
-        this.parseTree.push("PARSE - parsePrintStatement()");
+        this.cstStepTracer.push("PARSE - parsePrintStatement()");
         this.cst.addNode("branch", "PrintStatement");
         this.match(["print"]);
         this.match(["("]);
@@ -192,7 +192,7 @@ export class Parser
     // AssignmentStatement production
     parseAssignmentStatement(): void
     {
-        this.parseTree.push("PARSE - parseAssignmentStatement()");
+        this.cstStepTracer.push("PARSE - parseAssignmentStatement()");
         this.cst.addNode("branch", "AssignmentStatement");
         this.parseId();
         this.match(["="]);
@@ -203,7 +203,7 @@ export class Parser
     // VarDecl production
     parseVarDecl(): void
     {
-        this.parseTree.push("PARSE - parseVarDecl()");
+        this.cstStepTracer.push("PARSE - parseVarDecl()");
         this.cst.addNode("branch", "VarDecl");
         this.match(["int", "string", "boolean"]);
         this.parseId();
@@ -213,7 +213,7 @@ export class Parser
     // WhileStatement production
     parseWhileStatement(): void
     {
-        this.parseTree.push("PARSE - parseWhileStatement()");
+        this.cstStepTracer.push("PARSE - parseWhileStatement()");
         this.cst.addNode("branch", "WhileStatement");
         this.match(["while"]);
         this.parseBooleanExpr();
@@ -224,7 +224,7 @@ export class Parser
     // IfStatement production
     parseIfStatement(): void
     {
-        this.parseTree.push("PARSE - parseIfStatement()");
+        this.cstStepTracer.push("PARSE - parseIfStatement()");
         this.cst.addNode("branch", "IfStatement");
         this.match(["if"]);
         this.parseBooleanExpr();
@@ -235,7 +235,7 @@ export class Parser
     // Expr productions
     parseExpr(): void
     {
-        this.parseTree.push("PARSE - parseExpr()");
+        this.cstStepTracer.push("PARSE - parseExpr()");
         this.cst.addNode("branch", "Expr");
         let currentToken = this.tokenStream[this.pos];
 
@@ -266,7 +266,7 @@ export class Parser
     // IntExpr productions
     parseIntExpr(): void
     {
-        this.parseTree.push("PARSE - parseIntExpr()");
+        this.cstStepTracer.push("PARSE - parseIntExpr()");
         this.cst.addNode("branch", "IntExpr");
         this.match(["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]);
 
@@ -282,7 +282,7 @@ export class Parser
     // StringExpr production
     parseStringExpr(): void
     {
-        this.parseTree.push("PARSE - parseStringExpr()");
+        this.cstStepTracer.push("PARSE - parseStringExpr()");
         this.cst.addNode("branch", "StringExpr");
         this.match(["\""]);
         this.parseCharList();
@@ -293,7 +293,7 @@ export class Parser
     // BooleanExpr productions
     parseBooleanExpr(): void
     {
-        this.parseTree.push("PARSE - parseBooleanExpr()");
+        this.cstStepTracer.push("PARSE - parseBooleanExpr()");
         this.cst.addNode("branch", "BooleanExpr");
         let currentToken = this.tokenStream[this.pos];
 
@@ -320,7 +320,7 @@ export class Parser
     // Id production
     parseId(): void
     {
-        this.parseTree.push("PARSE - parseID()");
+        this.cstStepTracer.push("PARSE - parseID()");
         this.cst.addNode("branch", "Id");
         this.match(["a","b","c","d","e","f","g","h","i","j","k","l","m",
                     "n","o","p","q","r","s","t","u","v","w","x","y","z"]);
@@ -330,7 +330,7 @@ export class Parser
     // CharList production (change to make recursive)
     parseCharList(): void
     {
-        this.parseTree.push("PARSE - parseCharList()");
+        this.cstStepTracer.push("PARSE - parseCharList()");
         this.cst.addNode("branch", "CharList");
         let currentToken = this.tokenStream[this.pos];
 

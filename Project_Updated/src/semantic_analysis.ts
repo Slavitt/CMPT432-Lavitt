@@ -86,6 +86,7 @@ export class Semantic
     cst: CST;
     ast: AST;
     symbolTable: SymbolTable;
+    astStepTracer: string[] = [];
 
     // Uses the CST from parse as an attribute
     constructor(cst: CST)
@@ -116,37 +117,36 @@ export class Semantic
         switch(node.name)
         {
             case "Block":
-                console.log("block detected");
+                // console.log("block detected");
                 this.abstractBlock(node);
                 break;
 
             case "VarDecl":
-                console.log("vardecl detected");
+                // console.log("vardecl detected");
                 this.abstractVarDecl(node);
                 break;
 
             case "AssignmentStatement":
-                console.log("AssignmentStatement detected");
+                // console.log("AssignmentStatement detected");
                 this.abstractAssignmentStatement(node);
                 break;
 
             case "PrintStatement":
-                console.log("PrintStatement detected");
+                // console.log("PrintStatement detected");
                 this.abstractPrintStatement(node);
                 break;
 
             case "IfStatement":
-                console.log("IfStatement detected");
+                // console.log("IfStatement detected");
                 this.abstractIfStatement(node);
                 break;
 
             case "WhileStatement":
-                console.log("WhileStatement detected");
+                // console.log("WhileStatement detected");
                 this.abstractWhileStatement(node);
                 break;
 
-            // If the node is not one of the above statements,
-            // it is skipped over
+            // If the node is not one of the above statements, it is skipped
             default:
                 for (const c of node.children)
                 {
@@ -159,7 +159,7 @@ export class Semantic
     // Creates a Block node in the AST
     private abstractBlock(n: Node) 
     {
-        console.log("SEMANTIC - abstractBlock()");
+        this.astStepTracer.push("AST - abstractBlock()");
 
         this.ast.addNode("branch", "Block");
 
@@ -175,6 +175,8 @@ export class Semantic
     // Creates a VarDecl node in the AST and leaf nodes for Type and Id
     private abstractVarDecl(n: Node) 
     {
+        this.astStepTracer.push("AST - abstractVarDecl()");
+
         this.ast.addNode("branch", "VarDecl");
 
         let typeNode = n.children[0];
@@ -189,6 +191,8 @@ export class Semantic
     // Creates an AssignmentStatement node in the AST and leaf nodes for Id and Value
     private abstractAssignmentStatement(n: Node) 
     {
+        this.astStepTracer.push("AST - abstractAssignmentStatement()");
+
         this.ast.addNode("branch", "AssignmentStatement");
 
         let idNode = n.children[0].children[0];
@@ -202,6 +206,8 @@ export class Semantic
     // Creates a PrintStatement node in the AST and a leaf node for Id
     private abstractPrintStatement(n: Node) 
     {
+        this.astStepTracer.push("AST - abstractPrintStatement()");
+
         this.ast.addNode("branch", "PrintStatement");
 
         this.findExpr(n.children[2]);
@@ -212,7 +218,7 @@ export class Semantic
     // Creates an IfStatement node in the AST and branch nodes for isEq and a Block
     private abstractIfStatement(n: Node) 
     {
-        console.log("abstractIf()");
+        this.astStepTracer.push("AST - abstractIfStatement()");
 
         this.ast.addNode("branch", "if");
         this.findBooleanExpr(n.children[1]);
@@ -225,7 +231,7 @@ export class Semantic
     // Creates an WhileStatement node in the AST and branch nodes for isEq and a Block
     private abstractWhileStatement(n: Node) 
     {
-        console.log("abstractWhile()");
+        this.astStepTracer.push("AST - abstractWhileStatement()");
 
         this.ast.addNode("branch", "while");
 
@@ -243,7 +249,7 @@ export class Semantic
     // Searches for and returns the correct Expr type
     private findExpr(n: Node)
     {
-        console.log("findExpr()");
+        this.astStepTracer.push("AST - findExpr()");
 
         // IntExpr ----------------------------------------------
         if (n.name == "IntExpr")
@@ -291,6 +297,7 @@ export class Semantic
     // Assembles a string from the children of a CharList
     private concatCharList(n: Node): string
     {
+        this.astStepTracer.push("AST - abstractCharList()");
         let result = "";
         for (const c of n.children)
         {
@@ -311,7 +318,7 @@ export class Semantic
     // (help-ception?)
     private findBooleanExpr(n: Node)
     {
-        console.log("abstractBooleanExpr()");
+        this.astStepTracer.push("AST - abstractBlock()");
 
         if (n.children[0].name === "(") 
         {
@@ -325,6 +332,8 @@ export class Semantic
             this.ast.addNode("leaf", n.children[0].name);
         }
     }
+
+
 
 
     // SYMBOL TABLE GENERATION -------------------------------------------------------------------

@@ -21,13 +21,16 @@ function startCompilation(): void
 	output.value += "Starting compilation...\n";
 	output.value += "LEXER - begin lex --------------------\n";
 
-	let _Lexer = new Lexer();
+	let compStart = true;
+	let lexSuccess = false;
+	let parseSuccess = false;
+	let semanticSuccess = false;
 
 	// LEX ---------------------------------------------------------------------------------------
+	let _Lexer = new Lexer();
 	let tokenStream = _Lexer.generateTokens(message);
-	let lexSuccess = false;
 
-	// Outputs the token stream 
+	// Prints the token stream
 	for (let i = 0; i < tokenStream.length; i++)
 	{
 		output.value += `\nLEX - ${tokenStream[i].type} [  ${tokenStream[i].value} ] found at (${tokenStream[i].line},${tokenStream[i].index})`;
@@ -42,76 +45,82 @@ function startCompilation(): void
 		}
 	}
 
-	// Outputs the errors, if there are any ------------------------------
-	// If there are errors, the lex fails and the compilation halts
+	// Outputs the errors, if there are any
 	if (_Lexer.errorStream.length > 0)
 	{
 		for (let i = 0; i < _Lexer.errorStream.length; i++)
 		{
 			output.value += `\n${_Lexer.errorStream[i]}`;
 		}
+
+		// If there are errors, the lex fails and the compilation halts
 		output.value += `\n\nLEX COMPLETE with ${_Lexer.errorStream.length} errors and ${_Lexer.warningStream.length} warnings`
 		output.value += `\nLex Failed - error(s) detected`;
 	}
-	else // if the lex succeeds, it moves onto the parse!
+
+	// if the lex succeeds, it moves onto the parse!
+	else
 	{
-		output.value += "\nLEXER - lex success -----------------";
+		output.value += "\nLEXER - lex success";
 		lexSuccess = true;
 	}
 
 
 	// PARSE ------------------------------------------------------------------------------------
 	let _Parser = new Parser();
-	let parseSuccess = false;
 
-	// Begins the parse if the lex was successful
 	if (lexSuccess == true)
 	{
 		output.value += "\n\nPARSER - beginning parse... -----------------";
 		console.log("let's parse!");
 		_Parser.parseProgram(tokenStream);
 
-	// Prints the traversal of the production rules used to generate the CST
-	for (let i = 0; i < _Parser.parseTree.length; i++)
-	{
-		output.value += `\n${_Parser.parseTree[i]}`;
-	}
-
-	if (_Parser.errorStream.length > 0)
-	{
-		for (let i = 0; i < _Parser.errorStream.length; i++)
+		// Prints the traversal of the production rules used to generate the CST
+		for (let i = 0; i < _Parser.cstStepTracer.length; i++)
 		{
-			output.value += `\n${_Parser.errorStream[i]}`;
+			output.value += `\n${_Parser.cstStepTracer[i]}`;
 		}
-		// output.value += `\n\nPARSE COMPLETE with ${_Parser.errorStream.length} errors`;
-		output.value += `\nParse Failed - ${_Parser.errorStream.length} error(s) detected`;
-	}
-	else
-	{
-		output.value += "\n\nPARSER - parse success";
-		
-		// Prints the parse tree after the parse succeeds
-		output.value += "\n\nCONCRETE SYNTAX TREE"
-		output.value += `\n${_Parser.cst.printTree()}`;
-		
-		parseSuccess = true;
+
+		if (_Parser.errorStream.length > 0)
+		{
+			for (let i = 0; i < _Parser.errorStream.length; i++)
+			{
+				output.value += `\n${_Parser.errorStream[i]}`;
+			}
+			// output.value += `\n\nPARSE COMPLETE with ${_Parser.errorStream.length} errors`;
+			output.value += `\nParse Failed - ${_Parser.errorStream.length} error(s) detected`;
+		}
+		else
+		{
+			output.value += "\n\nPARSER - parse success";
+			
+			// Prints the parse tree after the parse succeeds
+			output.value += "\n\nCONCRETE SYNTAX TREE"
+			output.value += `\n${_Parser.cst.printTree()}`;
+			
+			parseSuccess = true;
+		}
 	}
 
-
-	// SEMANTIC ANALYSIS -------------------------------------------------------------
+	// SEMANTIC ANALYSIS ------------------------------------------------------------------------
 	if (parseSuccess == true)
 	{
 		output.value += "\n\nSEMANTIC - beginning semantic analysis... -------------";
 		
 		// create semantic analysis object and initialize success variable
 		let _Sem: Semantic = new Semantic(_Parser.cst);
-		let semanticSuccess = false;
 
 		_Sem.startSem();
 
 		console.log(_Sem.ast);
 		console.log(_Sem.symbolTable.printTable());
-		
+
+		// Prints the traversal of the production rules used to generate the CST
+		for (let i = 0; i < _Sem.astStepTracer.length; i++)
+		{
+			output.value += `\n${_Sem.astStepTracer[i]}`;
+		}
+
 		// Checks for any errors and prints them out
 		if (_Sem.symbolTable.errors.length > 0)
 		{
@@ -124,18 +133,18 @@ function startCompilation(): void
 		}
 		else // if there are no errors, proceed to code gen!
 		{
-			output.value += "\nSEMANTIC - success -----------------";
+			output.value += "\n\nSEMANTIC - success";
 			semanticSuccess = true;
 			output.value += "\nAST - \n" + _Sem.ast.printTree();
 			output.value += "\n\nSYMBOL TABLE - \n" + _Sem.symbolTable.printTable();
 		}
-
-
-	}
 	}
 
-	
-
+	// CODE GEN ---------------------------------------------------------------------------------
+	if (semanticSuccess == true)
+	{
+		console.log("call me brian gormanly the way i'm genning this code");
+	}
 
 
 
