@@ -4,7 +4,7 @@
 import { Lexer } from "./lexer.js";
 import { Parser } from "./parser.js";
 import { Semantic } from "./semantic_analysis.js";
-
+import { CodeGen } from "./codeGen.js";
 function startCompilation(): void 
 {
 	let program = document.getElementById("alert-input") as HTMLInputElement;
@@ -21,7 +21,6 @@ function startCompilation(): void
 	output.value += "Starting compilation...\n";
 	output.value += "LEXER - begin lex --------------------\n";
 
-	let compStart = true;
 	let lexSuccess = false;
 	let parseSuccess = false;
 	let semanticSuccess = false;
@@ -71,8 +70,7 @@ function startCompilation(): void
 
 	if (lexSuccess == true)
 	{
-		output.value += "\n\nPARSER - beginning parse... -----------------";
-		console.log("let's parse!");
+		output.value += "\n\n\nPARSER - beginning parse... -----------------";
 		_Parser.parseProgram(tokenStream);
 
 		// Prints the traversal of the production rules used to generate the CST
@@ -129,22 +127,49 @@ function startCompilation(): void
 				output.value += `\n${_Sem.symbolTable.errors[i]}`;
 			}
 			
-			output.value += `\Semantic Analysis Failed - ${_Sem.symbolTable.errors.length} error(s) detected`;
+			output.value += `\nSemantic Analysis Failed - ${_Sem.symbolTable.errors.length} error(s) detected`;
 		}
 		else // if there are no errors, proceed to code gen!
 		{
-			output.value += "\n\nSEMANTIC - success";
+			output.value += "\n\nSEMANTIC - success\n";
 			semanticSuccess = true;
-			output.value += "\nAST - \n" + _Sem.ast.printTree();
-			output.value += "\n\nSYMBOL TABLE - \n" + _Sem.symbolTable.printTable();
+			output.value += "\nABSTRACT SYNTAX TREE\n" + _Sem.ast.printTree();
+			output.value += "\nSYMBOL TABLE\n" + _Sem.symbolTable.printTable();
 		}
+
+
+
+
+		// CODE GEN ---------------------------------------------------------------------------------
+		if (semanticSuccess == true)
+		{
+			output.value += "\n\nCODE GEN - beginning code generation... -------------";
+
+			console.log("call me brian gormanly the way i 65 this 02");
+
+			let _codeGen: CodeGen = new CodeGen(_Sem.ast, _Sem.symbolTable);
+			let machineCode = _codeGen.generateMachineCode();
+
+			output.value += "\n\nPROGRAM\n\n";
+			output.value += machineCode;
+			
+			/* for (let i = 0; i < machineCode.length; i++)
+			{
+				output.value += `${machineCode[i]}`;
+				if (i % 16 == 0)
+				{
+					output.value += "\n";
+				}
+			} */
+			
+		}
+
+
+
+
 	}
 
-	// CODE GEN ---------------------------------------------------------------------------------
-	if (semanticSuccess == true)
-	{
-		console.log("call me brian gormanly the way i'm genning this code");
-	}
+	
 
 
 

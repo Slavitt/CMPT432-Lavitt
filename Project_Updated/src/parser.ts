@@ -1,5 +1,5 @@
-import { Token } from "./Token.js";
-import {Node} from "./Node.js";
+import { Token } from "./structures/Token.js";
+import {Node} from "./structures/Node.js";
 /*
 TO DO: 
     - error recovery
@@ -100,7 +100,8 @@ export class Parser
 
     // Program production
     parseProgram(tokenStream: Token[]): void
-    {
+    {   
+        console.log("let's parse!");
         this.cstStepTracer.push("PARSE - parseProgram()");
         this.tokenStream = tokenStream;
         this.cst.addNode("root", "Program");

@@ -1,4 +1,4 @@
-import { Token } from "./Token.js";
+import { Token } from "./structures/Token.js";
 
 /* REMEMBER TO DO THIS
 

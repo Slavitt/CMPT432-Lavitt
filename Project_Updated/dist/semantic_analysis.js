@@ -1,5 +1,5 @@
-import { Node } from "./Node.js";
-import { SymbolTable } from "./SymbolTable.js";
+import { Node } from "./structures/Node.js";
+import { SymbolTable } from "./structures/SymbolTable.js";
 // AST Class - pretty much the same thing as the CST
 // if you have time: create Tree.ts?
 export class AST {
