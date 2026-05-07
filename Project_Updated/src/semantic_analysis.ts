@@ -320,14 +320,18 @@ export class Semantic
     {
         this.astStepTracer.push("AST - abstractBlock()");
 
-        if (n.children[0].name === "(") 
+        if (n.children[0].name === "(")
         {
-            this.ast.addNode("branch", "isEq");
+            // Check boolop: children[2] is the boolop node (==  or !=)
+            const boolop    = n.children[2].name; // "==" or "!="
+            const nodeLabel = boolop === "==" ? "isEq" : "isNeq"; // CHANGED
+
+            this.ast.addNode("branch", nodeLabel);
             this.findExpr(n.children[1]); // left Expr
             this.findExpr(n.children[3]); // right Expr
             this.ast.moveUp();
         }
-        else if (n.children[0].kind === "leaf")
+        else
         {
             this.ast.addNode("leaf", n.children[0].name);
         }
@@ -391,7 +395,7 @@ export class Semantic
 
         private symbolVisitBlock(node: Node): void
     {
-        console.log("symbolVisitBlock()");
+        // console.log("symbolVisitBlock()");
         this.symbolTable.openScope();
 
         for (const c of node.children)
@@ -404,7 +408,7 @@ export class Semantic
 
     private symbolVisitVarDecl(node: Node): void
     {
-        console.log("symbolVisitVarDecl()");
+        // console.log("symbolVisitVarDecl()");
 
         const type = node.children[0].name;
         const id   = node.children[1].name;
@@ -420,7 +424,7 @@ export class Semantic
 
     private symbolVisitAssignmentStatement(node: Node): void
     {
-        console.log("symbolVisitAssignmentStatement()");
+        // console.log("symbolVisitAssignmentStatement()");
 
         const id    = node.children[0].name;
         const entry = this.symbolTable.current!.lookupAll(id);
@@ -452,7 +456,7 @@ export class Semantic
 
     private symbolVisitPrintStatement(node: Node): void
     {
-        console.log("symbolVisitPrintStatement()");
+        // console.log("symbolVisitPrintStatement()");
 
         const valueNode = node.children[0];
         const entry     = this.symbolTable.current!.lookupAll(valueNode.name);
@@ -472,7 +476,7 @@ export class Semantic
 
     private symbolVisitIfWhile(node: Node): void
     {
-        console.log("symbolVisitIfWhile()");
+        // console.log("symbolVisitIfWhile()");
 
         for (const c of node.children)
         {
@@ -482,7 +486,7 @@ export class Semantic
 
     private symbolVisitIsEq(node: Node): void
     {
-        console.log("symbolVisitIsEq()");
+        // console.log("symbolVisitIsEq()");
 
         const entries: (SymbolEntry | null)[] = [];
 

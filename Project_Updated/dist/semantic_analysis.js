@@ -209,12 +209,15 @@ export class Semantic {
     findBooleanExpr(n) {
         this.astStepTracer.push("AST - abstractBlock()");
         if (n.children[0].name === "(") {
-            this.ast.addNode("branch", "isEq");
+            // Check boolop: children[2] is the boolop node (==  or !=)
+            const boolop = n.children[2].name; // "==" or "!="
+            const nodeLabel = boolop === "==" ? "isEq" : "isNeq"; // CHANGED
+            this.ast.addNode("branch", nodeLabel);
             this.findExpr(n.children[1]); // left Expr
             this.findExpr(n.children[3]); // right Expr
             this.ast.moveUp();
         }
-        else if (n.children[0].kind === "leaf") {
+        else {
             this.ast.addNode("leaf", n.children[0].name);
         }
     }
@@ -256,7 +259,7 @@ export class Semantic {
         }
     }
     symbolVisitBlock(node) {
-        console.log("symbolVisitBlock()");
+        // console.log("symbolVisitBlock()");
         this.symbolTable.openScope();
         for (const c of node.children) {
             this.symbolVisit(c);
@@ -264,7 +267,7 @@ export class Semantic {
         this.symbolTable.closeScope();
     }
     symbolVisitVarDecl(node) {
-        console.log("symbolVisitVarDecl()");
+        // console.log("symbolVisitVarDecl()");
         const type = node.children[0].name;
         const id = node.children[1].name;
         if (this.symbolTable.current.lookup(id) !== null) {
@@ -274,7 +277,7 @@ export class Semantic {
         this.symbolTable.current.addEntry(id, type);
     }
     symbolVisitAssignmentStatement(node) {
-        console.log("symbolVisitAssignmentStatement()");
+        // console.log("symbolVisitAssignmentStatement()");
         const id = node.children[0].name;
         const entry = this.symbolTable.current.lookupAll(id);
         if (entry === null) {
@@ -295,7 +298,7 @@ export class Semantic {
         entry.isInitialized = true;
     }
     symbolVisitPrintStatement(node) {
-        console.log("symbolVisitPrintStatement()");
+        // console.log("symbolVisitPrintStatement()");
         const valueNode = node.children[0];
         const entry = this.symbolTable.current.lookupAll(valueNode.name);
         if (entry === null) {
@@ -307,13 +310,13 @@ export class Semantic {
         }
     }
     symbolVisitIfWhile(node) {
-        console.log("symbolVisitIfWhile()");
+        // console.log("symbolVisitIfWhile()");
         for (const c of node.children) {
             this.symbolVisit(c);
         }
     }
     symbolVisitIsEq(node) {
-        console.log("symbolVisitIsEq()");
+        // console.log("symbolVisitIsEq()");
         const entries = [];
         for (const c of node.children) {
             if (c.name === "isEq") {
