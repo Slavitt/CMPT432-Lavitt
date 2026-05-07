@@ -108,6 +108,8 @@ export class Parser
         this.parseBlock();
         this.match(["$"]);
         this.cst.moveUp();
+
+        console.log(this.cst);
     }
 
     // Block production

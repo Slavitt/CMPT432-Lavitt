@@ -340,7 +340,7 @@ export class Lexer
 
         console.log(`output is ${input}`);
        
-        console.log(this.tokenStream);
+        // console.log(this.tokenStream);
         return this.tokenStream;
     }
 
@@ -378,7 +378,7 @@ export class Lexer
         let t: Token = new Token(this.types[ref], this.tokenList[ref], this.line, this.index);
         this.tokenStream.push(t);
 
-        console.log(`LEX - ${t.type} [ ${t.value} ] found at (${t.line},${t.index})`);
+        // console.log(`LEX - ${t.type} [ ${t.value} ] found at (${t.line},${t.index})`);
     }
 
     // Pushes a keyword token to the stream
@@ -388,7 +388,7 @@ export class Lexer
         let t: Token = new Token(this.types[ref], this.tokenList[ref], this.line, i);
         this.tokenStream.push(t);
 
-        console.log(`LEX - ${t.type} [ ${t.value} ] found at (${t.line},${t.index})`);
+        // console.log(`LEX - ${t.type} [ ${t.value} ] found at (${t.line},${t.index})`);
     }
 
     // Pushes a character token to the stream
@@ -406,6 +406,6 @@ export class Lexer
 
         let t: Token = new Token(type, s, this.line, this.index);
         this.tokenStream.push(t);
-        console.log(`LEX - ${t.type} [ ${t.value} ] found at (${t.line},${t.index})`);
+        // console.log(`LEX - ${t.type} [ ${t.value} ] found at (${t.line},${t.index})`);
     }
 }

@@ -253,7 +253,7 @@ export class Lexer {
             this.generateToken("$");
         }
         console.log(`output is ${input}`);
-        console.log(this.tokenStream);
+        // console.log(this.tokenStream);
         return this.tokenStream;
     }
     // Helper functions -------------------------------------------
@@ -279,14 +279,14 @@ export class Lexer {
         let ref = this.tokenList.indexOf(s);
         let t = new Token(this.types[ref], this.tokenList[ref], this.line, this.index);
         this.tokenStream.push(t);
-        console.log(`LEX - ${t.type} [ ${t.value} ] found at (${t.line},${t.index})`);
+        // console.log(`LEX - ${t.type} [ ${t.value} ] found at (${t.line},${t.index})`);
     }
     // Pushes a keyword token to the stream
     generateKeywordToken(s, i) {
         let ref = this.tokenList.indexOf(s);
         let t = new Token(this.types[ref], this.tokenList[ref], this.line, i);
         this.tokenStream.push(t);
-        console.log(`LEX - ${t.type} [ ${t.value} ] found at (${t.line},${t.index})`);
+        // console.log(`LEX - ${t.type} [ ${t.value} ] found at (${t.line},${t.index})`);
     }
     // Pushes a character token to the stream
     generateCharToken(s) {
@@ -299,7 +299,7 @@ export class Lexer {
         }
         let t = new Token(type, s, this.line, this.index);
         this.tokenStream.push(t);
-        console.log(`LEX - ${t.type} [ ${t.value} ] found at (${t.line},${t.index})`);
+        // console.log(`LEX - ${t.type} [ ${t.value} ] found at (${t.line},${t.index})`);
     }
 }
 //# sourceMappingURL=lexer.js.map

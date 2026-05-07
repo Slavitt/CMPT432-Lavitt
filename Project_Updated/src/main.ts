@@ -5,6 +5,7 @@ import { Lexer } from "./lexer.js";
 import { Parser } from "./parser.js";
 import { Semantic } from "./semantic_analysis.js";
 import { CodeGen } from "./codeGen.js";
+
 function startCompilation(): void 
 {
 	let program = document.getElementById("alert-input") as HTMLInputElement;
