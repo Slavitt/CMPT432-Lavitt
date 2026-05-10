@@ -60,7 +60,7 @@ export class Lexer
             // Comments! Ignore whatever's in them! -------------------------------------------
             else if (currentChar == '/' && this.nextToken(program, this.pos) == '*')
             {
-                this.generateToken("/*");
+                // this.generateToken("/*");
                 inComment = true;
                 this.advance();
                 this.advance();
@@ -73,7 +73,7 @@ export class Lexer
                     if (currentChar == '*' && this.nextToken(program, this.pos) == '/')
                     {
                         inComment = false;
-                        this.generateToken("*/");
+                        // this.generateToken("*/");
                         this.advance();
                         this.advance();
                     }
