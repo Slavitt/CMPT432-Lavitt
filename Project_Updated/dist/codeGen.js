@@ -1,5 +1,5 @@
 import { StaticEntry, JumpEntry } from "./structures/StaticTableEntries.js";
-/* // ─── Static Table Entry ───────────────────────────────────────────────────────
+/* // --- Static Table Entry -------------------------------------------------------
 
 class StaticEntry
 {
@@ -17,7 +17,7 @@ class StaticEntry
     }
 }
 
-// ─── Jump Table Entry ─────────────────────────────────────────────────────────
+// --- Jump Table Entry -----------------------------------------------------------
 
 class JumpEntry
 {
@@ -31,7 +31,7 @@ class JumpEntry
     }
 }
 
-// ─── Code Gen ───────────────────────────────────────────────────────────────── */
+// --- Code Gen ----------------------------------------------------------------- */
 export class CodeGen {
     ;
     constructor(ast, symbolTable) {
@@ -45,25 +45,30 @@ export class CodeGen {
         this.tempCounter = 0;
         this.jumpCounter = 0;
         this.staticOffset = 0;
+        this.errors = [];
+        this.memError = false;
         this.ast = ast;
         this.symbolTable = symbolTable;
     }
-    // ── Public Entry Point ────────────────────────────────────────────────────
+    // -- Public Entry Point ----------------------------------------------------
     generateMachineCode() {
         if (this.ast.root !== null) {
             this.visit(this.ast.root);
         }
-        // Write BRK at end of code
-        this.emit("00");
-        // Backpatch
-        this.backpatch();
+        if (this.memError == false) {
+            // Write BRK at end of code
+            this.emit("00");
+            // Backpatch
+            this.backpatch();
+        }
         console.log(this.codeArr);
         return this.codeArr.join(' ');
     }
-    // ── Emit Helpers ──────────────────────────────────────────────────────────
+    // -- Emit Helpers ----------------------------------------------------------
     emit(byte) {
-        if (this.codePointer > this.heapPointer) {
-            throw new Error("Error: program exceeds 256 bytes");
+        if (this.codePointer > this.heapPointer && this.memError == false) {
+            this.errors.push("CODE GEN - Error: program exceeds 256 bytes");
+            this.memError = true;
         }
         this.codeArr[this.codePointer] = byte.toUpperCase();
         this.codePointer++;
@@ -75,7 +80,7 @@ export class CodeGen {
     emitJumpLabel(jumpLabel) {
         this.emit(jumpLabel);
     }
-    // ── Scope Helpers ─────────────────────────────────────────────────────────
+    // -- Scope Helpers ---------------------------------------------------------
     openScope() {
         if (this.currentScope === null) {
             this.currentScope = this.symbolTable.root;
@@ -92,7 +97,7 @@ export class CodeGen {
         this.currentScope = this.currentScope.parent;
         this.scopeChildIndex.pop();
     }
-    // ── Static Table Helpers ──────────────────────────────────────────────────
+    // -- Static Table Helpers --------------------------------------------------
     addStaticEntry(varName, scope) {
         const tempLabel = `T${this.tempCounter}`;
         this.staticTable.push(new StaticEntry(tempLabel, varName, scope, this.staticOffset));
@@ -110,11 +115,11 @@ export class CodeGen {
         }
         return this.lookupStatic(varName, scope.parent);
     }
-    // ── Jump Table Helpers ────────────────────────────────────────────────────
+    // -- Jump Table Helpers ----------------------------------------------------
     addJumpEntry(jumpLabel, distance) {
         this.jumpTable.push(new JumpEntry(jumpLabel, distance));
     }
-    // ── Visitor ───────────────────────────────────────────────────────────────
+    // -- Visitor ---------------------------------------------------------------
     visit(node) {
         switch (node.name) {
             case "Block":
@@ -142,7 +147,7 @@ export class CodeGen {
                 break;
         }
     }
-    // ── Block ─────────────────────────────────────────────────────────────────
+    // -- Block -----------------------------------------------------------------
     genBlock(node) {
         console.log("genBlock()");
         this.openScope();
@@ -151,7 +156,7 @@ export class CodeGen {
         }
         this.closeScope();
     }
-    // ── VarDecl ───────────────────────────────────────────────────────────────
+    // -- VarDecl ---------------------------------------------------------------
     genVarDecl(node) {
         console.log("genVarDecl()");
         const type = node.children[0].name;
@@ -168,7 +173,7 @@ export class CodeGen {
         }
         // string: static table entry only
     }
-    // ── AssignmentStatement ───────────────────────────────────────────────────
+    // -- AssignmentStatement ---------------------------------------------------
     genAssignmentStatement(node) {
         console.log("genAssignmentStatement()");
         const idName = node.children[0].name;
@@ -220,7 +225,7 @@ export class CodeGen {
             this.emitTempLabel(entry.tempLabel);
         }
     }
-    // ── PrintStatement ────────────────────────────────────────────────────────
+    // -- PrintStatement --------------------------------------------------------
     genPrintStatement(node) {
         console.log("genPrintStatement()");
         if (node.children.length === 1) {
@@ -284,7 +289,7 @@ export class CodeGen {
             this.emit("FF");
         }
     }
-    // ── If Statement ──────────────────────────────────────────────────────────
+    // -- If Statement ----------------------------------------------------------
     genIf(node) {
         console.log("genIf()");
         const isEqNode = node.children[0];
@@ -302,7 +307,7 @@ export class CodeGen {
         const distance = this.codePointer - bodyStart;
         this.addJumpEntry(jumpLabel, distance);
     }
-    // ── While Statement ───────────────────────────────────────────────────────
+    // -- While Statement -------------------------------------------------------
     genWhile(node) {
         console.log("genWhile()");
         const isEqNode = node.children[0];
@@ -337,18 +342,20 @@ export class CodeGen {
         const distance = this.codePointer - bodyStart;
         this.addJumpEntry(jumpLabel, distance);
     }
-    // ── Comparison ────────────────────────────────────────────────────────────
+    // -- Comparison ------------------------------------------------------------
     genComparison(isEqNode, isNotEqual) {
         const left = isEqNode.children[0];
         const right = isEqNode.children[1];
-        const leftEntry = this.lookupStatic(left.name, this.currentScope);
-        const rightEntry = this.lookupStatic(right.name, this.currentScope);
+        // const leftEntry  = this.lookupStatic(left.name, this.currentScope)!;
+        // const rightEntry = this.lookupStatic(right.name, this.currentScope)!;
+        const leftEntry = this.resolveOperand(left);
+        const rightEntry = this.resolveOperand(right);
         // LDX left's temp address
         this.emit("AE");
-        this.emitTempLabel(leftEntry.tempLabel);
+        this.emitTempLabel(leftEntry);
         // CPX right's temp address
         this.emit("EC");
-        this.emitTempLabel(rightEntry.tempLabel);
+        this.emitTempLabel(rightEntry);
         if (isNotEqual) {
             // Invert Z-flag
             const invTempLabel = this.addStaticEntry(`__inv${this.tempCounter}`, -1);
@@ -366,11 +373,13 @@ export class CodeGen {
             this.emitTempLabel(invTempLabel);
         }
     }
-    // ── Heap Helpers ──────────────────────────────────────────────────────────
+    // -- Heap Helpers ----------------------------------------------------------
     writeStringToHeap(str) {
         // Write null terminator first
         this.codeArr[this.heapPointer] = "00";
         this.heapPointer--;
+        // Strip the quotes from the string
+        str = str.replace(/"/g, '');
         // Write characters in reverse
         for (let i = str.length - 1; i >= 0; i--) {
             this.codeArr[this.heapPointer] = str.charCodeAt(i).toString(16).toUpperCase().padStart(2, '0');
@@ -382,14 +391,14 @@ export class CodeGen {
     isStringLiteral(val) {
         return isNaN(Number(val)) && val !== "true" && val !== "false";
     }
-    // ── Compile-time Int Expression Evaluator ─────────────────────────────────
+    // -- Compile-time Int Expression Evaluator ---------------------------------
     evalIntExpr(nodes) {
         return nodes.reduce((sum, n) => {
             const val = parseInt(n.name, 10);
             return isNaN(val) ? sum : sum + val;
         }, 0);
     }
-    // ── Backpatching ──────────────────────────────────────────────────────────
+    // -- Backpatching ----------------------------------------------------------
     backpatch() {
         const codeLength = this.codePointer;
         this.codeArr = this.codeArr.map(byte => {
@@ -409,6 +418,36 @@ export class CodeGen {
             }
             return byte;
         });
+    }
+    resolveOperand(node) {
+        // Check if it's a known variable
+        const staticEntry = this.lookupStatic(node.name, this.currentScope);
+        if (staticEntry !== null) {
+            return staticEntry.tempLabel;
+        }
+        // It's a literal — create a temp entry and store the value
+        const tempLabel = this.addStaticEntry(`__lit${this.tempCounter}`, -1);
+        let val;
+        if (node.name === "true") {
+            val = 0x01;
+        }
+        else if (node.name === "false") {
+            val = 0x00;
+        }
+        else if (!isNaN(parseInt(node.name, 10))) {
+            // Int literal
+            val = parseInt(node.name, 10);
+        }
+        else {
+            // String literal: store heap address
+            val = this.writeStringToHeap(node.name);
+        }
+        // Store the value into the temp address
+        this.emit("A9");
+        this.emit(val.toString(16).toUpperCase().padStart(2, '0'));
+        this.emit("8D");
+        this.emitTempLabel(tempLabel);
+        return tempLabel;
     }
 }
 //# sourceMappingURL=codeGen.js.map

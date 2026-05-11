@@ -3,7 +3,7 @@ import { SymbolTable, Scope } from "./structures/SymbolTable.js";
 import { Node } from "./structures/Node.js";
 import { StaticEntry, JumpEntry } from "./structures/StaticTableEntries.js";
 
-/* // ─── Static Table Entry ───────────────────────────────────────────────────────
+/* // --- Static Table Entry -------------------------------------------------------
 
 class StaticEntry
 {
@@ -21,7 +21,7 @@ class StaticEntry
     }
 }
 
-// ─── Jump Table Entry ─────────────────────────────────────────────────────────
+// --- Jump Table Entry -----------------------------------------------------------
 
 class JumpEntry
 {
@@ -35,7 +35,7 @@ class JumpEntry
     }
 }
 
-// ─── Code Gen ───────────────────────────────────────────────────────────────── */
+// --- Code Gen ----------------------------------------------------------------- */
 
 export class CodeGen
 {
@@ -52,6 +52,8 @@ export class CodeGen
     tempCounter: number = 0;
     jumpCounter: number = 0;
     staticOffset: number = 0;
+    errors: string[] = [];
+    memError: boolean = false;
 
     constructor(ast: AST, symbolTable: SymbolTable)
     {
@@ -59,7 +61,7 @@ export class CodeGen
         this.symbolTable = symbolTable;
     }
 
-    // ── Public Entry Point ────────────────────────────────────────────────────
+    // -- Public Entry Point ----------------------------------------------------
 
     generateMachineCode(): string
     {
@@ -68,24 +70,28 @@ export class CodeGen
             this.visit(this.ast.root);
         }
 
-        // Write BRK at end of code
-        this.emit("00");
+        if (this.memError == false)
+        {
+            // Write BRK at end of code
+            this.emit("00");
 
-        // Backpatch
-        this.backpatch();
-
+            // Backpatch
+            this.backpatch();
+        }
+        
         console.log(this.codeArr);
 
         return this.codeArr.join(' ');
     }
 
-    // ── Emit Helpers ──────────────────────────────────────────────────────────
+    // -- Emit Helpers ----------------------------------------------------------
 
     private emit(byte: string): void
     {
-        if (this.codePointer > this.heapPointer)
+        if (this.codePointer > this.heapPointer && this.memError == false)
         {
-            throw new Error("Error: program exceeds 256 bytes");
+            this.errors.push("CODE GEN - Error: program exceeds 256 bytes");
+            this.memError = true;
         }
         this.codeArr[this.codePointer] = byte.toUpperCase();
         this.codePointer++;
@@ -102,7 +108,7 @@ export class CodeGen
         this.emit(jumpLabel);
     }
 
-    // ── Scope Helpers ─────────────────────────────────────────────────────────
+    // -- Scope Helpers ---------------------------------------------------------
 
     private openScope(): void
     {
@@ -126,7 +132,7 @@ export class CodeGen
         this.scopeChildIndex.pop();
     }
 
-    // ── Static Table Helpers ──────────────────────────────────────────────────
+    // -- Static Table Helpers --------------------------------------------------
 
     private addStaticEntry(varName: string, scope: number): string
     {
@@ -145,14 +151,14 @@ export class CodeGen
         return this.lookupStatic(varName, scope.parent);
     }
 
-    // ── Jump Table Helpers ────────────────────────────────────────────────────
+    // -- Jump Table Helpers ----------------------------------------------------
 
     private addJumpEntry(jumpLabel: string, distance: number): void
     {
         this.jumpTable.push(new JumpEntry(jumpLabel, distance));
     }
 
-    // ── Visitor ───────────────────────────────────────────────────────────────
+    // -- Visitor ---------------------------------------------------------------
 
     private visit(node: Node): void
     {
@@ -185,7 +191,7 @@ export class CodeGen
         }
     }
 
-    // ── Block ─────────────────────────────────────────────────────────────────
+    // -- Block -----------------------------------------------------------------
 
     private genBlock(node: Node): void
     {
@@ -200,7 +206,7 @@ export class CodeGen
         this.closeScope();
     }
 
-    // ── VarDecl ───────────────────────────────────────────────────────────────
+    // -- VarDecl ---------------------------------------------------------------
 
     private genVarDecl(node: Node): void
     {
@@ -224,7 +230,7 @@ export class CodeGen
         // string: static table entry only
     }
 
-    // ── AssignmentStatement ───────────────────────────────────────────────────
+    // -- AssignmentStatement ---------------------------------------------------
 
     private genAssignmentStatement(node: Node): void
     {
@@ -289,7 +295,7 @@ export class CodeGen
         }
     }
 
-    // ── PrintStatement ────────────────────────────────────────────────────────
+    // -- PrintStatement --------------------------------------------------------
 
     private genPrintStatement(node: Node): void
     {
@@ -367,7 +373,7 @@ export class CodeGen
         }
     }
 
-    // ── If Statement ──────────────────────────────────────────────────────────
+    // -- If Statement ----------------------------------------------------------
 
     private genIf(node: Node): void
     {
@@ -393,7 +399,7 @@ export class CodeGen
         this.addJumpEntry(jumpLabel, distance);
     }
 
-    // ── While Statement ───────────────────────────────────────────────────────
+    // -- While Statement -------------------------------------------------------
 
     private genWhile(node: Node): void
     {
@@ -440,23 +446,26 @@ export class CodeGen
         this.addJumpEntry(jumpLabel, distance);
     }
 
-    // ── Comparison ────────────────────────────────────────────────────────────
+    // -- Comparison ------------------------------------------------------------
 
     private genComparison(isEqNode: Node, isNotEqual: boolean): void
     {
         const left  = isEqNode.children[0];
         const right = isEqNode.children[1];
 
-        const leftEntry  = this.lookupStatic(left.name, this.currentScope)!;
-        const rightEntry = this.lookupStatic(right.name, this.currentScope)!;
+        // const leftEntry  = this.lookupStatic(left.name, this.currentScope)!;
+        // const rightEntry = this.lookupStatic(right.name, this.currentScope)!;
+
+        const leftEntry  = this.resolveOperand(left);
+        const rightEntry = this.resolveOperand(right);
 
         // LDX left's temp address
         this.emit("AE");
-        this.emitTempLabel(leftEntry.tempLabel);
+        this.emitTempLabel(leftEntry);
 
         // CPX right's temp address
         this.emit("EC");
-        this.emitTempLabel(rightEntry.tempLabel);
+        this.emitTempLabel(rightEntry);
 
         if (isNotEqual)
         {
@@ -478,13 +487,16 @@ export class CodeGen
         }
     }
 
-    // ── Heap Helpers ──────────────────────────────────────────────────────────
+    // -- Heap Helpers ----------------------------------------------------------
 
     private writeStringToHeap(str: string): number
     {
         // Write null terminator first
         this.codeArr[this.heapPointer] = "00";
         this.heapPointer--;
+
+        // Strip the quotes from the string
+        str = str.replace(/"/g, '');
 
         // Write characters in reverse
         for (let i = str.length - 1; i >= 0; i--)
@@ -502,7 +514,7 @@ export class CodeGen
         return isNaN(Number(val)) && val !== "true" && val !== "false";
     }
 
-    // ── Compile-time Int Expression Evaluator ─────────────────────────────────
+    // -- Compile-time Int Expression Evaluator ---------------------------------
 
     private evalIntExpr(nodes: Node[]): number
     {
@@ -513,7 +525,7 @@ export class CodeGen
         }, 0);
     }
 
-    // ── Backpatching ──────────────────────────────────────────────────────────
+    // -- Backpatching ----------------------------------------------------------
 
     private backpatch(): void
     {
@@ -542,5 +554,47 @@ export class CodeGen
 
             return byte;
         });
+    }
+
+    private resolveOperand(node: Node): string
+    {
+        // Check if it's a known variable
+        const staticEntry = this.lookupStatic(node.name, this.currentScope);
+        if (staticEntry !== null)
+        {
+            return staticEntry.tempLabel;
+        }
+
+        // It's a literal — create a temp entry and store the value
+        const tempLabel = this.addStaticEntry(`__lit${this.tempCounter}`, -1);
+
+        let val: number;
+
+        if (node.name === "true")
+        {
+            val = 0x01;
+        }
+        else if (node.name === "false")
+        {
+            val = 0x00;
+        }
+        else if (!isNaN(parseInt(node.name, 10)))
+        {
+            // Int literal
+            val = parseInt(node.name, 10);
+        }
+        else
+        {
+            // String literal: store heap address
+            val = this.writeStringToHeap(node.name);
+        }
+
+        // Store the value into the temp address
+        this.emit("A9");
+        this.emit(val.toString(16).toUpperCase().padStart(2, '0'));
+        this.emit("8D");
+        this.emitTempLabel(tempLabel);
+
+        return tempLabel;
     }
 }
