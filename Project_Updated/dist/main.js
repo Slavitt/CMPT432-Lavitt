@@ -110,8 +110,10 @@ function startCompilation() {
                 output.value += "\n\nSEMANTIC - success\n";
                 semanticSuccess = true;
                 output.value += "\nABSTRACT SYNTAX TREE\n" + _Sem.ast.printTree();
-                for (let i = 0; i < _Sem.symbolTable.stepTracer.length; i++) {
-                    output.value += `\n${_Sem.symbolTable.stepTracer[i]}`;
+                if (verbose) {
+                    for (let i = 0; i < _Sem.symbolTable.stepTracer.length; i++) {
+                        output.value += `\n${_Sem.symbolTable.stepTracer[i]}`;
+                    }
                 }
                 output.value += "\nSYMBOL TABLE\n" + _Sem.symbolTable.printTable();
                 console.log(_Sem.symbolTable.errors);
