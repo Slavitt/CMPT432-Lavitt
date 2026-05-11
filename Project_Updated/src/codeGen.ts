@@ -496,12 +496,12 @@ export class CodeGen
         this.heapPointer--;
 
         // Strip the quotes from the string
-        str = str.replace(/"/g, '');
+        let str2 = str.replace(/"/g, '');
 
         // Write characters in reverse
-        for (let i = str.length - 1; i >= 0; i--)
+        for (let i = str2.length - 1; i >= 0; i--)
         {
-            this.codeArr[this.heapPointer] = str.charCodeAt(i).toString(16).toUpperCase().padStart(2, '0');
+            this.codeArr[this.heapPointer] = str2.charCodeAt(i).toString(16).toUpperCase().padStart(2, '0');
             this.heapPointer--;
         }
 
