@@ -38,6 +38,7 @@ export class Scope {
 }
 export class SymbolTable {
     constructor() {
+        this.stepTracer = [];
         this.root = null;
         this.current = null;
         this.scopeCounter = 0;
@@ -54,10 +55,12 @@ export class SymbolTable {
             this.current.children.push(scope);
         }
         this.current = scope;
+        this.stepTracer.push(`SYMBOL TABLE - Scope ${scope.name} opened`);
     }
     // Close the current scope and move up to parent
     closeScope() {
         if (this.current !== null) {
+            this.stepTracer.push(`SYMBOL TABLE - Scope ${this.current.name} closed`);
             this.current = this.current.parent;
         }
     }
