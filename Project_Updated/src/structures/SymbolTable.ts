@@ -85,7 +85,7 @@ export class SymbolTable
         }
         this.current = scope;
 
-        this.stepTracer.push(`SYMBOL TABLE - Scope ${scope.name} opened`);
+        // this.stepTracer.push(`SYMBOL TABLE - Scope ${scope.name} opened`);
         
     }
 

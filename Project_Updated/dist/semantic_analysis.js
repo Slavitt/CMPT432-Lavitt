@@ -309,12 +309,15 @@ export class Semantic {
         this.symbolTable.stepTracer.push("SYMBOL TABLE - visitPrintStatement()");
         const valueNode = node.children[0];
         const entry = this.symbolTable.current.lookupAll(valueNode.name);
-        if (entry === null) {
-            this.symbolThrowError(`Error: variable '${valueNode.name}' used before declaration`);
-            console.log(`Error: variable '${valueNode.name}' used before declaration`);
+        if (entry !== null) {
+            entry.isUsed = true;
+        }
+        else if (this.inferType(valueNode.name) !== null) {
+            // Do nothing (input is a literal)
         }
         else {
-            entry.isUsed = true;
+            this.symbolThrowError(`Error: variable '${valueNode.name}' used before declaration`);
+            console.log(`Error: variable '${valueNode.name}' used before declaration`);
         }
     }
     symbolVisitIfWhile(node) {

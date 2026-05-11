@@ -397,7 +397,7 @@ export class Semantic
 
     private symbolVisitBlock(node: Node): void
     {
-        this.symbolTable.stepTracer.push("SYMBOL TABLE - visitBlock()");
+        this.symbolTable.stepTracer.push("SYMBOL TABLE: Block - Scope/Type Check");
 
         this.symbolTable.openScope();
 
@@ -411,7 +411,7 @@ export class Semantic
 
     private symbolVisitVarDecl(node: Node): void
     {
-        this.symbolTable.stepTracer.push("SYMBOL TABLE - visitVarDecl()");
+        this.symbolTable.stepTracer.push("SYMBOL TABLE: VarDecl - Scope/Type Check");
 
         const type = node.children[0].name;
         const id   = node.children[1].name;
@@ -427,7 +427,7 @@ export class Semantic
 
     private symbolVisitAssignmentStatement(node: Node): void
     {
-       this.symbolTable.stepTracer.push("SYMBOL TABLE - visitAssignmentStatement()");
+       this.symbolTable.stepTracer.push("SYMBOL TABLE: Assignment - Scope/Type Check");
 
         const id = node.children[0].name;
         const entry = this.symbolTable.current!.lookupAll(id);
@@ -469,19 +469,23 @@ export class Semantic
 
     private symbolVisitPrintStatement(node: Node): void
     {
-        this.symbolTable.stepTracer.push("SYMBOL TABLE - visitPrintStatement()");
+        this.symbolTable.stepTracer.push("SYMBOL TABLE: Print - Scope/Type Check");
 
         const valueNode = node.children[0];
-        const entry     = this.symbolTable.current!.lookupAll(valueNode.name);
+        const entry = this.symbolTable.current!.lookupAll(valueNode.name);
 
-        if (entry === null)
+        if (entry !== null)
         {
-            this.symbolThrowError(`Error: variable '${valueNode.name}' used before declaration`);
-            console.log(`Error: variable '${valueNode.name}' used before declaration`);
+            entry.isUsed = true;
+        }
+        else if (this.inferType(valueNode.name) !== null)
+        {
+            // Do nothing (input is a literal)
         }
         else
         {
-            entry!.isUsed = true;
+            this.symbolThrowError(`Error: variable '${valueNode.name}' used before declaration`);
+            console.log(`Error: variable '${valueNode.name}' used before declaration`);
         }
 
         
@@ -489,7 +493,7 @@ export class Semantic
 
     private symbolVisitIfWhile(node: Node): void
     {
-
+        this.symbolTable.stepTracer.push("SYMBOL TABLE: If/While - Scope/Type Check");
         for (const c of node.children)
         {
             this.symbolVisit(c);
@@ -498,7 +502,7 @@ export class Semantic
 
     private symbolVisitIsEq(node: Node): void
     {
-        this.symbolTable.stepTracer.push("SYMBOL TABLE - visitIsEq()");
+        this.symbolTable.stepTracer.push("SYMBOL TABLE: Check Type Equivalence");
 
         const types: (string | null)[] = [];
 
