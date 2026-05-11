@@ -175,7 +175,7 @@ export class Semantic {
         else if (n.name == "StringExpr") {
             const charList = n.children[1];
             const str = this.concatCharList(charList);
-            this.ast.addNode("leaf", str);
+            this.ast.addNode("leaf", `"${str}"`);
         }
         // BooleanExpr ----------------------------------------------
         else if (n.name == "BooleanExpr") {
@@ -211,7 +211,7 @@ export class Semantic {
         if (n.children[0].name === "(") {
             // Check boolop: children[2] is the boolop node (==  or !=)
             const boolop = n.children[2].name; // "==" or "!="
-            const nodeLabel = boolop === "==" ? "isEq" : "isNeq"; // CHANGED
+            const nodeLabel = boolop === "==" ? "isEq" : "isNeq";
             this.ast.addNode("branch", nodeLabel);
             this.findExpr(n.children[1]); // left Expr
             this.findExpr(n.children[3]); // right Expr
@@ -249,6 +249,7 @@ export class Semantic {
                 this.symbolVisitIfWhile(node);
                 break;
             case "isEq":
+            case "isNeq":
                 this.symbolVisitIsEq(node);
                 break;
             default:
@@ -259,7 +260,7 @@ export class Semantic {
         }
     }
     symbolVisitBlock(node) {
-        // console.log("symbolVisitBlock()");
+        this.symbolTable.stepTracer.push("SYMBOL TABLE - visitBlock()");
         this.symbolTable.openScope();
         for (const c of node.children) {
             this.symbolVisit(c);
@@ -267,7 +268,7 @@ export class Semantic {
         this.symbolTable.closeScope();
     }
     symbolVisitVarDecl(node) {
-        // console.log("symbolVisitVarDecl()");
+        this.symbolTable.stepTracer.push("SYMBOL TABLE - visitVarDecl()");
         const type = node.children[0].name;
         const id = node.children[1].name;
         if (this.symbolTable.current.lookup(id) !== null) {
@@ -277,7 +278,7 @@ export class Semantic {
         this.symbolTable.current.addEntry(id, type);
     }
     symbolVisitAssignmentStatement(node) {
-        // console.log("symbolVisitAssignmentStatement()");
+        this.symbolTable.stepTracer.push("SYMBOL TABLE - visitAssignmentStatement()");
         const id = node.children[0].name;
         const entry = this.symbolTable.current.lookupAll(id);
         if (entry === null) {
@@ -294,11 +295,18 @@ export class Semantic {
                 }
                 valueEntry.isUsed = true;
             }
+            else {
+                const literalType = this.inferType(valueNode.name);
+                if (literalType !== null && literalType !== entry.type) {
+                    this.symbolThrowError(`Error: type mismatch — cannot assign '${literalType}' value to '${entry.type}' variable '${id}'`);
+                    console.log("Error: type mismatch");
+                }
+            }
         }
         entry.isInitialized = true;
     }
     symbolVisitPrintStatement(node) {
-        // console.log("symbolVisitPrintStatement()");
+        this.symbolTable.stepTracer.push("SYMBOL TABLE - visitPrintStatement()");
         const valueNode = node.children[0];
         const entry = this.symbolTable.current.lookupAll(valueNode.name);
         if (entry === null) {
@@ -310,30 +318,32 @@ export class Semantic {
         }
     }
     symbolVisitIfWhile(node) {
-        // console.log("symbolVisitIfWhile()");
         for (const c of node.children) {
             this.symbolVisit(c);
         }
     }
     symbolVisitIsEq(node) {
-        // console.log("symbolVisitIsEq()");
-        const entries = [];
+        this.symbolTable.stepTracer.push("SYMBOL TABLE - visitIsEq()");
+        const types = [];
         for (const c of node.children) {
-            if (c.name === "isEq") {
+            if (c.name === "isEq" || c.name === "isNeq") {
                 this.symbolVisitIsEq(c);
             }
             else if (c.kind === "leaf") {
                 const entry = this.symbolTable.current.lookupAll(c.name);
                 if (entry !== null) {
                     entry.isUsed = true;
-                    entries.push(entry);
+                    types.push(entry.type);
+                }
+                else {
+                    types.push(this.inferType(c.name));
                 }
             }
         }
-        if (entries.length === 2 && entries[0] !== null && entries[1] !== null) {
-            if (entries[0].type !== entries[1].type) {
-                this.symbolThrowError(`Error: type mismatch — cannot compare '${entries[0].type}' with '${entries[1].type}'`);
-                console.log("Error: type mismatch");
+        if (types.length === 2 && types[0] !== null && types[1] !== null) {
+            if (types[0] !== types[1]) {
+                this.symbolThrowError(`Error: type mismatch — cannot compare '${types[0]}' with '${types[1]}'`);
+                return;
             }
         }
     }
@@ -360,6 +370,24 @@ export class Semantic {
     }
     symbolThrowError(message) {
         this.symbolTable.errors.push(message);
+    }
+    inferType(value) {
+        console.log(value);
+        // Int: is a number
+        if (!isNaN(parseInt(value, 10))) {
+            return "int";
+        }
+        // Boolean: is true or false
+        if (value === "true" || value === "false") {
+            return "boolean";
+        }
+        // String: anything else that isn't a variable name (single char would
+        // be caught by lookupAll already, so if we're here it's a string literal)
+        if (value.startsWith('"')) {
+            return "string";
+        }
+        // Single char could be an undeclared variable — can't infer
+        return null;
     }
 }
 //# sourceMappingURL=semantic_analysis.js.map

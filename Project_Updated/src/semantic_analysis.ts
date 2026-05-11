@@ -87,6 +87,7 @@ export class Semantic
     ast: AST;
     symbolTable: SymbolTable;
     astStepTracer: string[] = [];
+    
 
     // Uses the CST from parse as an attribute
     constructor(cst: CST)
@@ -272,7 +273,7 @@ export class Semantic
         {
             const charList = n.children[1];
             const str = this.concatCharList(charList);
-            this.ast.addNode("leaf", str);
+            this.ast.addNode("leaf", `"${str}"`);
         }
 
         // BooleanExpr ----------------------------------------------
@@ -324,7 +325,7 @@ export class Semantic
         {
             // Check boolop: children[2] is the boolop node (==  or !=)
             const boolop    = n.children[2].name; // "==" or "!="
-            const nodeLabel = boolop === "==" ? "isEq" : "isNeq"; // CHANGED
+            const nodeLabel = boolop === "==" ? "isEq" : "isNeq";
 
             this.ast.addNode("branch", nodeLabel);
             this.findExpr(n.children[1]); // left Expr
@@ -381,6 +382,7 @@ export class Semantic
                 break;
 
             case "isEq":
+            case "isNeq":
                 this.symbolVisitIsEq(node);
                 break;
 
@@ -393,9 +395,10 @@ export class Semantic
         }
     }
 
-        private symbolVisitBlock(node: Node): void
+    private symbolVisitBlock(node: Node): void
     {
-        // console.log("symbolVisitBlock()");
+        this.symbolTable.stepTracer.push("SYMBOL TABLE - visitBlock()");
+
         this.symbolTable.openScope();
 
         for (const c of node.children)
@@ -408,7 +411,7 @@ export class Semantic
 
     private symbolVisitVarDecl(node: Node): void
     {
-        // console.log("symbolVisitVarDecl()");
+        this.symbolTable.stepTracer.push("SYMBOL TABLE - visitVarDecl()");
 
         const type = node.children[0].name;
         const id   = node.children[1].name;
@@ -424,9 +427,9 @@ export class Semantic
 
     private symbolVisitAssignmentStatement(node: Node): void
     {
-        // console.log("symbolVisitAssignmentStatement()");
+       this.symbolTable.stepTracer.push("SYMBOL TABLE - visitAssignmentStatement()");
 
-        const id    = node.children[0].name;
+        const id = node.children[0].name;
         const entry = this.symbolTable.current!.lookupAll(id);
 
         if (entry === null)
@@ -449,6 +452,16 @@ export class Semantic
                 }
                 valueEntry.isUsed = true;
             }
+
+            else
+            {
+                const literalType = this.inferType(valueNode.name);
+                if (literalType !== null && literalType !== entry!.type)
+                {
+                    this.symbolThrowError(`Error: type mismatch — cannot assign '${literalType}' value to '${entry!.type}' variable '${id}'`);
+                    console.log("Error: type mismatch");
+                }
+            }
         }
 
         entry!.isInitialized = true;
@@ -456,7 +469,7 @@ export class Semantic
 
     private symbolVisitPrintStatement(node: Node): void
     {
-        // console.log("symbolVisitPrintStatement()");
+        this.symbolTable.stepTracer.push("SYMBOL TABLE - visitPrintStatement()");
 
         const valueNode = node.children[0];
         const entry     = this.symbolTable.current!.lookupAll(valueNode.name);
@@ -464,7 +477,7 @@ export class Semantic
         if (entry === null)
         {
             this.symbolThrowError(`Error: variable '${valueNode.name}' used before declaration`);
-            console.log(`Error: variable '${valueNode.name}' used before declaration`)
+            console.log(`Error: variable '${valueNode.name}' used before declaration`);
         }
         else
         {
@@ -476,7 +489,6 @@ export class Semantic
 
     private symbolVisitIfWhile(node: Node): void
     {
-        // console.log("symbolVisitIfWhile()");
 
         for (const c of node.children)
         {
@@ -486,13 +498,13 @@ export class Semantic
 
     private symbolVisitIsEq(node: Node): void
     {
-        // console.log("symbolVisitIsEq()");
+        this.symbolTable.stepTracer.push("SYMBOL TABLE - visitIsEq()");
 
-        const entries: (SymbolEntry | null)[] = [];
+        const types: (string | null)[] = [];
 
         for (const c of node.children)
         {
-            if (c.name === "isEq")
+            if (c.name === "isEq" || c.name === "isNeq")
             {
                 this.symbolVisitIsEq(c);
             }
@@ -502,17 +514,21 @@ export class Semantic
                 if (entry !== null)
                 {
                     entry.isUsed = true;
-                    entries.push(entry);
+                    types.push(entry.type);
+                }
+                else
+                {
+                    types.push(this.inferType(c.name));
                 }
             }
         }
 
-        if (entries.length === 2 && entries[0] !== null && entries[1] !== null)
+        if (types.length === 2 && types[0] !== null && types[1] !== null)
         {
-            if (entries[0].type !== entries[1].type)
+            if (types[0] !== types[1])
             {
-                this.symbolThrowError(`Error: type mismatch — cannot compare '${entries[0].type}' with '${entries[1].type}'`);
-                console.log("Error: type mismatch");
+                this.symbolThrowError(`Error: type mismatch — cannot compare '${types[0]}' with '${types[1]}'`);
+                return;
             }
         }
     }
@@ -555,7 +571,31 @@ export class Semantic
         this.symbolTable.errors.push(message);
     }
 
+    private inferType(value: string): string | null
+    {
+        console.log(value);
+        // Int: is a number
+        if (!isNaN(parseInt(value, 10)))
+        {
+            return "int"; 
+        }
 
+        // Boolean: is true or false
+        if (value === "true" || value === "false") 
+        {
+            return "boolean"; 
+        }
+
+        // String: anything else that isn't a variable name (single char would
+        // be caught by lookupAll already, so if we're here it's a string literal)
+        if (value.startsWith('"')) 
+        {
+            return "string";
+        }
+
+        // Single char could be an undeclared variable — can't infer
+        return null;
+    }
 
 
 
