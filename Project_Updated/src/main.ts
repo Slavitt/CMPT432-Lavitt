@@ -6,6 +6,8 @@ import { Parser } from "./parser.js";
 import { Semantic } from "./semantic_analysis.js";
 import { CodeGen } from "./codeGen.js";
 
+let verbose = true;
+
 function startCompilation(): void 
 {
 	let srcInput = document.getElementById("alert-input") as HTMLInputElement;
@@ -48,10 +50,13 @@ function startCompilation(): void
 		let _Lexer = new Lexer();
 		let tokenStream = _Lexer.generateTokens(programs[i]);
 
-		// Prints the token stream
-		for (let i = 0; i < tokenStream.length; i++)
+		// Prints the token stream if verbose functionality is enabled
+		if (verbose)
 		{
-			output.value += `\nLEX - ${tokenStream[i].type} [  ${tokenStream[i].value} ] found at (${tokenStream[i].line},${tokenStream[i].index})`;
+			for (let i = 0; i < tokenStream.length; i++)
+			{
+				output.value += `\nLEX - ${tokenStream[i].type} [  ${tokenStream[i].value} ] found at (${tokenStream[i].line},${tokenStream[i].index})`;
+			}
 		}
 
 		// Outputs the warnings, if there are any
@@ -93,9 +98,12 @@ function startCompilation(): void
 			_Parser.parseProgram(tokenStream);
 
 			// Prints the traversal of the production rules used to generate the CST
-			for (let i = 0; i < _Parser.cstStepTracer.length; i++)
+			if (verbose)
 			{
-				output.value += `\n${_Parser.cstStepTracer[i]}`;
+				for (let i = 0; i < _Parser.cstStepTracer.length; i++)
+				{
+					output.value += `\n${_Parser.cstStepTracer[i]}`;
+				}
 			}
 
 			if (_Parser.errorStream.length > 0)
@@ -133,9 +141,12 @@ function startCompilation(): void
 			console.log(_Sem.symbolTable.printTable());
 
 			// Prints the traversal of the production rules used to generate the CST
-			for (let i = 0; i < _Sem.astStepTracer.length; i++)
+			if (verbose)
 			{
-				output.value += `\n${_Sem.astStepTracer[i]}`;
+				for (let i = 0; i < _Sem.astStepTracer.length; i++)
+				{
+					output.value += `\n${_Sem.astStepTracer[i]}`;
+				}
 			}
 
 			// Checks for any errors and prints them out
@@ -154,9 +165,12 @@ function startCompilation(): void
 				semanticSuccess = true;
 				output.value += "\nABSTRACT SYNTAX TREE\n" + _Sem.ast.printTree();
 
-				for (let i = 0; i < _Sem.symbolTable.stepTracer.length; i++)
+				if (verbose)
 				{
+					for (let i = 0; i < _Sem.symbolTable.stepTracer.length; i++)
+					{
 					output.value += `\n${_Sem.symbolTable.stepTracer[i]}`;
+					}
 				}
 
 				output.value += "\nSYMBOL TABLE\n" + _Sem.symbolTable.printTable();
@@ -221,6 +235,18 @@ function init(): void {
 	{
 		button.addEventListener("click", startCompilation);
 	}
+
+	const verboseBtn = document.getElementById("verbose-btn") as HTMLButtonElement;
+    const verboseLabel = document.getElementById("verbose-label") as HTMLSpanElement;
+    if (verboseBtn)
+    {
+        verboseBtn.addEventListener("click", () =>
+        {
+            verbose = !verbose;
+            verboseBtn.textContent = verbose ? "Verbose Functionality: ON" : "Verbose Functionality: OFF"
+            verboseBtn.className = verbose ? "toggle-on" : "toggle-off";
+        });
+    }
 }
  
 init();

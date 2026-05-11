@@ -4,6 +4,7 @@ import { Lexer } from "./lexer.js";
 import { Parser } from "./parser.js";
 import { Semantic } from "./semantic_analysis.js";
 import { CodeGen } from "./codeGen.js";
+let verbose = true;
 function startCompilation() {
     let srcInput = document.getElementById("alert-input");
     let output = document.getElementById("alert-output");
@@ -31,9 +32,11 @@ function startCompilation() {
         // LEX ---------------------------------------------------------------------------------------
         let _Lexer = new Lexer();
         let tokenStream = _Lexer.generateTokens(programs[i]);
-        // Prints the token stream
-        for (let i = 0; i < tokenStream.length; i++) {
-            output.value += `\nLEX - ${tokenStream[i].type} [  ${tokenStream[i].value} ] found at (${tokenStream[i].line},${tokenStream[i].index})`;
+        // Prints the token stream if verbose functionality is enabled
+        if (verbose) {
+            for (let i = 0; i < tokenStream.length; i++) {
+                output.value += `\nLEX - ${tokenStream[i].type} [  ${tokenStream[i].value} ] found at (${tokenStream[i].line},${tokenStream[i].index})`;
+            }
         }
         // Outputs the warnings, if there are any
         if (_Lexer.warningStream.length > 0) {
@@ -61,8 +64,10 @@ function startCompilation() {
             output.value += "\n\n\nPARSER - beginning parse... -----------------";
             _Parser.parseProgram(tokenStream);
             // Prints the traversal of the production rules used to generate the CST
-            for (let i = 0; i < _Parser.cstStepTracer.length; i++) {
-                output.value += `\n${_Parser.cstStepTracer[i]}`;
+            if (verbose) {
+                for (let i = 0; i < _Parser.cstStepTracer.length; i++) {
+                    output.value += `\n${_Parser.cstStepTracer[i]}`;
+                }
             }
             if (_Parser.errorStream.length > 0) {
                 for (let i = 0; i < _Parser.errorStream.length; i++) {
@@ -88,8 +93,10 @@ function startCompilation() {
             console.log(_Sem.ast);
             console.log(_Sem.symbolTable.printTable());
             // Prints the traversal of the production rules used to generate the CST
-            for (let i = 0; i < _Sem.astStepTracer.length; i++) {
-                output.value += `\n${_Sem.astStepTracer[i]}`;
+            if (verbose) {
+                for (let i = 0; i < _Sem.astStepTracer.length; i++) {
+                    output.value += `\n${_Sem.astStepTracer[i]}`;
+                }
             }
             // Checks for any errors and prints them out
             if (_Sem.symbolTable.errors.length > 0) {
@@ -136,6 +143,15 @@ function init() {
     const button = document.getElementById("hello-btn");
     if (button) {
         button.addEventListener("click", startCompilation);
+    }
+    const verboseBtn = document.getElementById("verbose-btn");
+    const verboseLabel = document.getElementById("verbose-label");
+    if (verboseBtn) {
+        verboseBtn.addEventListener("click", () => {
+            verbose = !verbose;
+            verboseBtn.textContent = verbose ? "Verbose Functionality: ON" : "Verbose Functionality: OFF";
+            verboseBtn.className = verbose ? "toggle-on" : "toggle-off";
+        });
     }
 }
 init();
