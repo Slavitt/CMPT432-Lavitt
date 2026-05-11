@@ -5,13 +5,16 @@ import { Parser } from "./parser.js";
 import { Semantic } from "./semantic_analysis.js";
 import { CodeGen } from "./codeGen.js";
 function startCompilation() {
-    let program = document.getElementById("alert-input");
+    let srcInput = document.getElementById("alert-input");
     let output = document.getElementById("alert-output");
-    let message = program === null || program === void 0 ? void 0 : program.value.trim();
+    let message = srcInput === null || srcInput === void 0 ? void 0 : srcInput.value.trim();
     if (output.value.length > 0) {
         output.value += "\n";
         output.value = "";
     }
+    // Split the input string into programs
+    let programs = message.split("$");
+    console.log(programs);
     output.value += "Starting compilation...\n";
     output.value += "LEXER - begin lex --------------------\n";
     let lexSuccess = false;
@@ -41,7 +44,7 @@ function startCompilation() {
     }
     // if the lex succeeds, it moves onto the parse!
     else {
-        output.value += "\nLEXER - lex success";
+        output.value += `\nLEXER - lex successful with ${_Lexer.errorStream.length} errors and ${_Lexer.warningStream.length} warnings`;
         lexSuccess = true;
     }
     // PARSE ------------------------------------------------------------------------------------
@@ -61,7 +64,7 @@ function startCompilation() {
             output.value += `\nParse Failed - ${_Parser.errorStream.length} error(s) detected`;
         }
         else {
-            output.value += "\n\nPARSER - parse success";
+            output.value += `\n\nPARSER - parse successful with ${_Parser.errorStream.length} errors detected`;
             // Prints the parse tree after the parse succeeds
             output.value += "\n\nCONCRETE SYNTAX TREE";
             output.value += `\n${_Parser.cst.printTree()}`;
@@ -92,7 +95,11 @@ function startCompilation() {
             output.value += "\n\nSEMANTIC - success\n";
             semanticSuccess = true;
             output.value += "\nABSTRACT SYNTAX TREE\n" + _Sem.ast.printTree();
+            for (let i = 0; i < _Sem.symbolTable.stepTracer.length; i++) {
+                output.value += `\n${_Sem.symbolTable.stepTracer[i]}`;
+            }
             output.value += "\nSYMBOL TABLE\n" + _Sem.symbolTable.printTable();
+            console.log(_Sem.symbolTable.errors);
         }
         // CODE GEN ---------------------------------------------------------------------------------
         if (semanticSuccess == true) {
@@ -100,16 +107,16 @@ function startCompilation() {
             console.log("call me brian gormanly the way i 65 this 02");
             let _codeGen = new CodeGen(_Sem.ast, _Sem.symbolTable);
             let machineCode = _codeGen.generateMachineCode();
-            output.value += "\n\nPROGRAM\n\n";
-            output.value += machineCode;
-            /* for (let i = 0; i < machineCode.length; i++)
-            {
-                output.value += `${machineCode[i]}`;
-                if (i % 16 == 0)
-                {
-                    output.value += "\n";
+            if (_codeGen.errors.length > 0) {
+                for (let i = 0; i < _codeGen.errors.length; i++) {
+                    output.value += `\n${_codeGen.errors[i]}`;
+                    output.value += `\nCode Generation Failed - ${_codeGen.errors.length} error(s) detected`;
                 }
-            } */
+            }
+            else {
+                output.value += "\n\nPROGRAM\n\n";
+                output.value += machineCode;
+            }
         }
     }
     output.scrollTop = output.scrollHeight;

@@ -8,16 +8,20 @@ import { CodeGen } from "./codeGen.js";
 
 function startCompilation(): void 
 {
-	let program = document.getElementById("alert-input") as HTMLInputElement;
+	let srcInput = document.getElementById("alert-input") as HTMLInputElement;
 	let output = document.getElementById("alert-output") as HTMLTextAreaElement;
 	
-	let message = program?.value.trim();
+	let message = srcInput?.value.trim();
 
 	if (output.value.length > 0) 
 	{
 		output.value += "\n";
 		output.value = "";
 	}
+
+	// Split the input string into programs
+	let programs: string[] = message.split("$");
+	console.log(programs);
 
 	output.value += "Starting compilation...\n";
 	output.value += "LEXER - begin lex --------------------\n";
@@ -61,7 +65,7 @@ function startCompilation(): void
 	// if the lex succeeds, it moves onto the parse!
 	else
 	{
-		output.value += "\nLEXER - lex success";
+		output.value += `\nLEXER - lex successful with ${_Lexer.errorStream.length} errors and ${_Lexer.warningStream.length} warnings`;
 		lexSuccess = true;
 	}
 
@@ -91,7 +95,7 @@ function startCompilation(): void
 		}
 		else
 		{
-			output.value += "\n\nPARSER - parse success";
+			output.value += `\n\nPARSER - parse successful with ${_Parser.errorStream.length} errors detected`;
 			
 			// Prints the parse tree after the parse succeeds
 			output.value += "\n\nCONCRETE SYNTAX TREE"
@@ -135,7 +139,15 @@ function startCompilation(): void
 			output.value += "\n\nSEMANTIC - success\n";
 			semanticSuccess = true;
 			output.value += "\nABSTRACT SYNTAX TREE\n" + _Sem.ast.printTree();
+
+			for (let i = 0; i < _Sem.symbolTable.stepTracer.length; i++)
+			{
+				output.value += `\n${_Sem.symbolTable.stepTracer[i]}`;
+			}
+
 			output.value += "\nSYMBOL TABLE\n" + _Sem.symbolTable.printTable();
+
+			console.log(_Sem.symbolTable.errors);
 		}
 
 
@@ -151,17 +163,20 @@ function startCompilation(): void
 			let _codeGen: CodeGen = new CodeGen(_Sem.ast, _Sem.symbolTable);
 			let machineCode = _codeGen.generateMachineCode();
 
-			output.value += "\n\nPROGRAM\n\n";
-			output.value += machineCode;
-			
-			/* for (let i = 0; i < machineCode.length; i++)
+			if (_codeGen.errors.length > 0)
 			{
-				output.value += `${machineCode[i]}`;
-				if (i % 16 == 0)
+				for (let i = 0; i < _codeGen.errors.length; i++)
 				{
-					output.value += "\n";
+					output.value += `\n${_codeGen.errors[i]}`;
+					output.value += `\nCode Generation Failed - ${_codeGen.errors.length} error(s) detected`;
 				}
-			} */
+			}
+			else
+			{
+				output.value += "\n\nPROGRAM\n\n";
+				output.value += machineCode;
+			}
+
 			
 		}
 
