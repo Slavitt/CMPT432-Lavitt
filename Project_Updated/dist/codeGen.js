@@ -301,16 +301,36 @@ export class CodeGen {
     // -- If Statement ----------------------------------------------------------
     genIf(node) {
         this.codeGenStepTracker.push("CODE GEN - If Statement");
-        const isEqNode = node.children[0];
+        const firstChild = node.children[0];
         const blockNode = node.children[1];
-        const isNotEqual = isEqNode.name === "isNeq";
-        this.genComparison(isEqNode, isNotEqual);
-        // BNE with jump placeholder
+        // ADDED: handle boolval case (if (true) or if (false))
+        if (firstChild.kind === "leaf") {
+            const boolTempLabel = this.addStaticEntry(`__bool${this.tempCounter}`, -1);
+            const val = firstChild.name === "true" ? "01" : "00";
+            // Store boolval in temp
+            this.emit("A9");
+            this.emit(val);
+            this.emit("8D");
+            this.emitTempLabel(boolTempLabel);
+            // Compare against 01 — if false (00), Z=0, BNE skips body
+            const oneTempLabel = this.addStaticEntry(`__one${this.tempCounter}`, -1);
+            this.emit("A9");
+            this.emit("01");
+            this.emit("8D");
+            this.emitTempLabel(oneTempLabel);
+            this.emit("AE");
+            this.emitTempLabel(boolTempLabel);
+            this.emit("EC");
+            this.emitTempLabel(oneTempLabel);
+        }
+        else {
+            const isNotEqual = firstChild.name === "isNeq";
+            this.genComparison(firstChild, isNotEqual);
+        }
         const jumpLabel = `J${this.jumpCounter}`;
         this.jumpCounter++;
         this.emit("D0");
         this.emitJumpLabel(jumpLabel);
-        // Generate body and measure distance
         const bodyStart = this.codePointer;
         this.genBlock(blockNode);
         const distance = this.codePointer - bodyStart;
@@ -319,21 +339,37 @@ export class CodeGen {
     // -- While Statement -------------------------------------------------------
     genWhile(node) {
         this.codeGenStepTracker.push("CODE GEN - While Statement");
-        const isEqNode = node.children[0];
+        const firstChild = node.children[0];
         const blockNode = node.children[1];
         const compStart = this.codePointer;
-        const isNotEqual = isEqNode.name === "isNeq";
-        this.genComparison(isEqNode, isNotEqual);
-        // BNE with jump placeholder (jump over body if condition false)
+        // ADDED: handle boolval case
+        if (firstChild.kind === "leaf") {
+            const boolTempLabel = this.addStaticEntry(`__bool${this.tempCounter}`, -1);
+            const val = firstChild.name === "true" ? "01" : "00";
+            this.emit("A9");
+            this.emit(val);
+            this.emit("8D");
+            this.emitTempLabel(boolTempLabel);
+            const oneTempLabel = this.addStaticEntry(`__one${this.tempCounter}`, -1);
+            this.emit("A9");
+            this.emit("01");
+            this.emit("8D");
+            this.emitTempLabel(oneTempLabel);
+            this.emit("AE");
+            this.emitTempLabel(boolTempLabel);
+            this.emit("EC");
+            this.emitTempLabel(oneTempLabel);
+        }
+        else {
+            const isNotEqual = firstChild.name === "isNeq";
+            this.genComparison(firstChild, isNotEqual);
+        }
         const jumpLabel = `J${this.jumpCounter}`;
         this.jumpCounter++;
         this.emit("D0");
         this.emitJumpLabel(jumpLabel);
-        // Generate body
         const bodyStart = this.codePointer;
         this.genBlock(blockNode);
-        // Unconditional branch back to comparison
-        // Force Z=0: store 1 in temp, LDX #0, CPX temp -> Z=0, BNE back
         const forceTempLabel = this.addStaticEntry(`__force${this.tempCounter}`, -1);
         this.emit("A9");
         this.emit("01");
@@ -343,11 +379,9 @@ export class CodeGen {
         this.emit("00");
         this.emit("EC");
         this.emitTempLabel(forceTempLabel);
-        // Jump back: 256 - (current position - compStart + 2)
         const jumpBack = (0x100 - (this.codePointer - compStart + 2)) & 0xFF;
         this.emit("D0");
         this.emit(jumpBack.toString(16).toUpperCase().padStart(2, '0'));
-        // Forward jump distance
         const distance = this.codePointer - bodyStart;
         this.addJumpEntry(jumpLabel, distance);
     }
