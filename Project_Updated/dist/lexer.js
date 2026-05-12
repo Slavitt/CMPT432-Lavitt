@@ -66,9 +66,10 @@ export class Lexer {
                         this.index = 1;
                     }
                     // Warning for unterminated comments
-                    if (this.pos >= program.length) {
-                        this.warningStream.push("WARNING: Unterminated comment. Fix this!");
+                    if (this.pos >= program.length - 1) {
+                        this.errorStream.push("ERROR: Unterminated comment. Fix this!");
                         inComment = false;
+                        break;
                     }
                     this.advance();
                 }

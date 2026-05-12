@@ -89,10 +89,11 @@ export class Lexer
                     }
 
                     // Warning for unterminated comments
-                    if (this.pos >= program.length)
+                    if (this.pos >= program.length - 1)
                     {
-                        this.warningStream.push("WARNING: Unterminated comment. Fix this!");
+                        this.errorStream.push("ERROR: Unterminated comment. Fix this!");
                         inComment = false;
+                        break;
                     }
                     this.advance();
                 }
@@ -307,7 +308,6 @@ export class Lexer
                     {
                         this.warningStream.push("WARNING: unterminated string");
                         inQuote = false;
-
                     }
                 } 
             }
