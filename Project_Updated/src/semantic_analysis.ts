@@ -455,7 +455,14 @@ export class Semantic
             else
             {
                 const literalType = this.inferType(valueNode.name);
-                if (literalType !== null && literalType !== entry!.type)
+
+                if (literalType === null)
+                {
+                    this.symbolThrowError(`Error: variable '${valueNode.name}' used before declaration`);
+                    console.log(`Error: variable '${valueNode.name}' used before declaration`);
+                    return;
+                }
+                if (literalType !== entry!.type)
                 {
                     this.symbolThrowError(`Error: type mismatch — cannot assign '${literalType}' value to '${entry!.type}' variable '${id}'`);
                     console.log("Error: type mismatch");
