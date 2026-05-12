@@ -222,11 +222,15 @@ export class CodeGen {
         }
         else {
             // Int expression: evaluate at compile time
+            /*
             const result = this.evalIntExpr(node.children.slice(1));
             this.emit("A9");
             this.emit(result.toString(16).toUpperCase().padStart(2, '0'));
             this.emit("8D");
             this.emitTempLabel(entry.tempLabel);
+            */
+            this.codeGenStepTracker.push("CODE GEN - Addition");
+            this.genIntExpr(node.children.slice(1), entry.tempLabel);
         }
     }
     // -- PrintStatement --------------------------------------------------------
@@ -351,11 +355,17 @@ export class CodeGen {
     genComparison(isEqNode, isNotEqual) {
         this.codeGenStepTracker.push("CODE GEN - Equality");
         const left = isEqNode.children[0];
-        const right = isEqNode.children[1];
-        // const leftEntry  = this.lookupStatic(left.name, this.currentScope)!;
-        // const rightEntry = this.lookupStatic(right.name, this.currentScope)!;
         const leftEntry = this.resolveOperand(left);
-        const rightEntry = this.resolveOperand(right);
+        let rightEntry;
+        if (isEqNode.children.length > 2) {
+            // Right side is an int expression — evaluate and store in temp
+            const exprTempLabel = this.addStaticEntry(`__cmp${this.tempCounter}`, -1);
+            this.genIntExpr(isEqNode.children.slice(1), exprTempLabel);
+            rightEntry = exprTempLabel;
+        }
+        else {
+            rightEntry = this.resolveOperand(isEqNode.children[1]);
+        }
         // LDX left's temp address
         this.emit("AE");
         this.emitTempLabel(leftEntry);
@@ -460,6 +470,45 @@ export class CodeGen {
         this.emit("8D");
         this.emitTempLabel(tempLabel);
         return tempLabel;
+    }
+    genIntExpr(nodes, destTempLabel) {
+        // Load first operand into accumulator
+        const first = nodes[0];
+        const firstEntry = this.lookupStatic(first.name, this.currentScope);
+        if (firstEntry !== null) {
+            // Variable: LDA from memory
+            this.emit("AD");
+            this.emitTempLabel(firstEntry.tempLabel);
+        }
+        else {
+            // Int literal: LDA with constant
+            const val = parseInt(first.name, 10);
+            this.emit("A9");
+            this.emit(val.toString(16).toUpperCase().padStart(2, '0'));
+        }
+        // Add each subsequent operand using ADC
+        for (let i = 1; i < nodes.length; i++) {
+            const operand = nodes[i];
+            const operandEntry = this.lookupStatic(operand.name, this.currentScope);
+            if (operandEntry !== null) {
+                // Variable: ADC directly from memory
+                this.emit("6D");
+                this.emitTempLabel(operandEntry.tempLabel);
+            }
+            else if (!isNaN(parseInt(operand.name, 10))) {
+                // Int literal: store acc in temp, load literal, ADC from temp
+                const addTempLabel = this.addStaticEntry(`__add${this.tempCounter}`, -1);
+                this.emit("8D");
+                this.emitTempLabel(addTempLabel);
+                this.emit("A9");
+                this.emit(parseInt(operand.name, 10).toString(16).toUpperCase().padStart(2, '0'));
+                this.emit("6D");
+                this.emitTempLabel(addTempLabel);
+            }
+        }
+        // Store result in destination
+        this.emit("8D");
+        this.emitTempLabel(destTempLabel);
     }
 }
 //# sourceMappingURL=codeGen.js.map
