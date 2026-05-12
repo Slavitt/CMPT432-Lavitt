@@ -1,50 +1,547 @@
-SAM'S TEST CASES
+/* ============================================================
+   LEX ERRORS
+   ============================================================ */
 
-/* ------ Lex Errors ------ */
-/* Invalid Character (equals - three errors) */
-{int a
-a = 1
-int b
-b = 2
-if (a == 1) {print(a)}
-if (a != 1) {print(b)}
-if (a !! 1) {print(a)}
-if (a =! 1) {print(b)}
+/* LEX ERROR: multiple unidentified characters after valid code */
+{ int a a = 1 print(a) @#% }$
+
+/* LEX ERROR: unidentified character inside an expression */
+{ int a a = 1 print(a^b) }$
+
+
+/* ============================================================
+   LEX WARNINGS
+   ============================================================ */
+
+/* LEX WARNING: unterminated quote */
+{ string a a = "unterminated }$
+
+/* LEX WARNING: unterminated comment */
+{ int a /* this never ends a = 1 }$
+
+/* LEX WARNING: missing EOP symbol */
+{ int a a = 1 print(a) }
+
+
+/* ============================================================
+   PARSE ERRORS
+   ============================================================ */
+
+/* PARSE ERROR: double type declaration */
+{ int int a }$
+
+/* PARSE ERROR: missing expression after assignment */
+{ int a a = }$
+
+/* PARSE ERROR: missing closing paren in print */
+{ print( }$
+
+/* PARSE ERROR: while with no block */
+{ while (a == 1) }$
+
+/* PARSE ERROR: missing closing brace */
+{ if (a == b) { print(a) }$
+
+/* PARSE ERROR: type declaration with assignment (not allowed by grammar) */
+{ int a = 1 }$
+
+/* PARSE ERROR: boolean expression as a statement */
+{ (a == b) }$
+
+
+/* ============================================================
+   SEMANTIC ERRORS
+   ============================================================ */
+
+/* SEMANTIC ERROR: redeclaration in same scope */
+{ int a int a }$
+
+/* SEMANTIC ERROR: use of undeclared variable in assignment */
+{ int a a = b }$
+
+/* SEMANTIC ERROR: print undeclared variable */
+{ print(a) }$
+
+/* SEMANTIC ERROR: type mismatch - string assigned to int literal */
+{ int a a = "hello" }$
+
+/* SEMANTIC ERROR: type mismatch - string variable assigned to int variable */
+{ int a string b a = b }$
+
+/* SEMANTIC ERROR: type mismatch - boolean variable assigned to int variable */
+{ int a boolean b a = b }$
+
+/* SEMANTIC ERROR: type mismatch in comparison */
+{ int a string b if (a == b) { print(a) } }$
+
+/* SEMANTIC ERROR: comparing int to boolean */
+{ int a if (a == true) { print(a) } }$
+
+/* SEMANTIC ERROR: variable used outside its scope */
+{
+int a a = 1
+{
+int b b = 2
+}
+print(b)
 }$
 
 
-/* ------ Parse Errors ------ */
+/* ============================================================
+   SEMANTIC WARNINGS
+   ============================================================ */
+
+/* SEMANTIC WARNING: declared but never used or initialized */
+{ int a }$
+
+/* SEMANTIC WARNING: declared and initialized but never used elsewhere */
+{ int a a = 1 }$
+
+/* SEMANTIC WARNING: used without being initialized */
+{ int a print(a) }$
 
 
+/* ============================================================
+   CODE GEN ERRORS
+   ============================================================ */
 
-/* ------ Semantic Analysis Errors ------ */
-
-
-
-
-/* ------ Other Test Cases ------ */
-{intii=0stringss="hello"booleanbb=(true==(1!=2))if(b==true){while(true!=(b!=(false==(2!=3)))){i=1+iprint(s)}}print("ugly code")}$
-
-/* Long Test Case - Everything Except Boolean Declaration */
+/* CODE GEN ERROR: program exceeds 256 bytes */
 {
-	/* Int Declaration */
-	int a
-	int b
-	a = 0
-	b = 0
-	/* While Loop */
-	while (a != 3) {
-		print(a)
-		while (b !=3 ) {
-			print(b)
-			b= 1 + b
-			if (b == 2) {
-				/* Print Statement */
-				print("there is no spoon" /*This will do nothing*/)
-			}
-		}
-	b = 0 
-	a = 1 + a
-	}
+int a int b int c int d int e int f int g int h int i int j
+int k int l int m int n int o int p int q int r int s int t
+a=1 b=2 c=3 d=4 e=5 f=6 g=7 h=8 i=9 j=1
+k=2 l=3 m=4 n=5 o=6 p=7 q=8 r=9 s=1 t=2
+while(a!=9){a=1+a}
+while(b!=9){b=1+b}
+while(c!=9){c=1+c}
+}$
+
+
+/* ============================================================
+   EDGE CASES
+   ============================================================ */
+
+/* EDGE CASE: scope shadowing - same variable name across 4 nested scopes
+   should print 4 3 2 1 */
+{
+int a a=1
+{int a a=2
+{int a a=3
+{int a a=4
+print(a)}
+print(a)}
+print(a)}
+print(a)}$
+
+/* EDGE CASE: variable used in its own assignment before initialization */
+{
+int a
+a = a
+print(a)
+}$
+
+/* EDGE CASE: deeply nested boolean expressions */
+{
+boolean a a=true
+boolean b b=false
+boolean c
+c=((a==true)!=(b==false))
+print(c)
+}$
+
+/* EDGE CASE: addition across nested scopes */
+{
+int a a=1
+{
+int b b=2
+{
+int c
+c=1+2+a
+print(c)
 }
-$ 
+print(b)
+}
+print(a)
+}$
+
+/* EDGE CASE: while loop that never executes
+   should only print 5 */
+{
+int a a=5
+while(a!=5){
+print(a)
+a=1+a
+}
+print(a)
+}$
+
+/* EDGE CASE: comparison with expression on both sides
+   should print 3 and 6 but not 3 again */
+{
+int a a=3
+int b b=6
+if(1+2==a){print(a)}
+if(3+3==b){print(b)}
+if(1+2==3+3){print(a)}
+}$
+
+/* EDGE CASE: string assigned then reassigned then compared */
+{
+string a
+a="first"
+print(a)
+a="second"
+print(a)
+if(a=="second"){
+print("changed")
+}
+}$
+
+/* EDGE CASE: empty blocks everywhere */
+{{{{{}}}{}{}{{}}}}$
+
+/* EDGE CASE: parse error - id used as left operand in IntExpr
+   grammar only allows digit intop Expr, not id intop Expr */
+{
+int a a=4
+int b b=5
+boolean d
+d=(a+1!=b)
+print(d)
+}$
+
+/* EDGE CASE: comments inside expressions */
+{
+int a a=1+/*add one*/1
+print(a)
+}$
+
+/* EDGE CASE: multiple programs with mix of passing and failing
+   programs 1 and 3 succeed, 2 fails at lex, 4 gives semantic warning */
+{int a a=1 print(a)}$
+{int a a=@}$
+{string b b="hello" print(b)}$
+{int c print(c)}$
+
+/* EDGE CASE: boolean assigned from comparison of additions */
+{
+int a a=4
+int b b=5
+boolean c
+c=(1+3==2+2)
+print(c)
+print(b)
+}$
+
+/* EDGE CASE: while with boolval condition - loops forever */
+{
+int a a=0
+while true {
+print(a)
+a=1+a
+}
+}$
+
+/* EDGE CASE: if with boolval false - body never executes */
+{
+int a a=9
+if false {
+print(a)
+}
+print(a)
+}$
+
+/* EDGE CASE: if with boolval true - always executes */
+{
+int a a=9
+if true {
+print(a)
+}
+}$
+
+/* EDGE CASE: deeply nested empty scopes with one statement at the bottom */
+{
+{
+{
+{
+int a a=5
+print(a)
+}
+}
+}
+}$
+
+/* EDGE CASE: string comparison where strings are equal
+   should print the string */
+{
+string a a="bond"
+if(a=="bond"){
+print(a)
+}
+}$
+
+/* EDGE CASE: string comparison where strings are not equal
+   should not print anything */
+{
+string a a="bond"
+if(a=="james"){
+print(a)
+}
+}$
+
+/* EDGE CASE: reassigning a variable many times then printing */
+{
+int a
+a=1a=2a=3a=4
+a=5
+print(a)
+}$
+
+/* EDGE CASE: comments that look like code */
+{
+int a a=1
+/* int b b=2
+print(b) */
+print(a)
+}$
+
+/* EDGE CASE: adjacent comments with no whitespace */
+{int a/**/a=1/**/print(a)}$
+
+/* EDGE CASE: boolean expression as assignment value */
+{
+int a a=5
+boolean b
+b=(a==5)
+print(b)
+}$
+
+/* EDGE CASE: chained addition with many operands */
+{
+int a
+a=1+1+1+1+1+1+1+1+1
+print(a)
+}$
+
+/* EDGE CASE: comparing result of addition to another addition
+   both sides have expressions */
+{
+if(1+2+3==2+2+2){
+print("six")
+}
+}$
+
+/* ============================================================
+   LITERAL TEST CASES
+   ============================================================ */
+ 
+/* LITERAL: print int literals directly */
+{
+print(0)
+print(1)
+print(9)
+}$
+ 
+/* LITERAL: print string literals directly */
+{
+print("hello")
+print("world")
+print("a")
+}$
+ 
+/* LITERAL: print boolean literals directly */
+{
+print(true)
+print(false)
+}$
+ 
+/* LITERAL: compare int literal to int literal - equal */
+{
+if(1==1){
+print("equal")
+}
+}$
+ 
+/* LITERAL: compare int literal to int literal - not equal */
+{
+if(1!=2){
+print("not equal")
+}
+}$
+ 
+/* LITERAL: compare string literal to string literal - equal */
+{
+if("hello"=="hello"){
+print("same")
+}
+}$
+ 
+/* LITERAL: compare string literal to string literal - not equal */
+{
+if("hello"!="world"){
+print("different")
+}
+}$
+ 
+/* LITERAL: compare boolean literal to boolean literal */
+{
+if(true==true){
+print("both true")
+}
+if(false==false){
+print("both false")
+}
+if(true!=false){
+print("different bools")
+}
+}$
+ 
+/* LITERAL: assign int literal to variable and compare to literal */
+{
+int a a=5
+if(a==5){
+print("five")
+}
+if(a!=6){
+print("not six")
+}
+}$
+ 
+/* LITERAL: assign string literal to variable and compare to literal */
+{
+string a a="test"
+if(a=="test"){
+print("match")
+}
+if(a!="other"){
+print("no match")
+}
+}$
+ 
+/* LITERAL: assign boolean literal to variable and compare to literal */
+{
+boolean a a=true
+if(a==true){
+print("is true")
+}
+if(a!=false){
+print("not false")
+}
+}$
+ 
+/* LITERAL: int literal in addition */
+{
+int a a=3
+int b
+b=1+2+3+a
+print(b)
+}$
+ 
+/* LITERAL: compare addition result to literal */
+{
+if(1+1==2){
+print("one plus one")
+}
+if(3+3!=5){
+print("three plus three")
+}
+}$
+ 
+/* LITERAL: string literal printed multiple times - tests heap deduplication */
+{
+print("same")
+print("same")
+print("same")
+}$
+ 
+/* LITERAL: multiple different string literals */
+{
+print("one")
+print("two")
+print("three")
+print("four")
+print("five")
+}$
+ 
+/* LITERAL: boolean literal as while condition that immediately exits */
+{
+int a a=0
+while(a!=0){
+print("never")
+}
+print("done")
+}$
+ 
+/* LITERAL: compare literal to literal in while condition */
+{
+int a a=0
+while(a!=3){
+if(a==1){
+print("one")
+}
+if(a==2){
+print("two")
+}
+a=1+a
+}
+}$
+ 
+/* LITERAL: mix of literal types in comparisons */
+{
+boolean a a=(1==1)
+boolean b b=("hi"=="hi")
+boolean c c=(true==true)
+print(a)
+print(b)
+print(c)
+}$
+ 
+/* LITERAL: nested boolean expressions with literals */
+{
+boolean a
+a=((1==1)==(true==true))
+print(a)
+}$
+ 
+/* LITERAL: print literal inside if body */
+{
+int a a=5
+if(a==5){
+print(1)
+print("yes")
+print(true)
+}
+}$
+ 
+/* LITERAL: string literal assigned and reassigned */
+{
+string a
+a="first"
+print(a)
+a="second"
+print(a)
+a="third"
+print(a)
+}$
+ 
+/* LITERAL: int literal compared to addition result */
+{
+if(9==4+5){
+print("nine")
+}
+if(6!=1+2+3+1){
+print("not seven")
+}
+}$
+ 
+/* LITERAL: semantic error - type mismatch with literals */
+{ int a a = "hello" }$
+ 
+/* LITERAL: semantic error - comparing int literal to string literal */
+{ if(1=="one"){ print("bad") } }$
+ 
+/* LITERAL: semantic error - comparing bool literal to int literal */
+{ if(true==1){ print("bad") } }$
+ 
+/* LITERAL: semantic error - comparing string literal to bool literal */
+{ if("true"==true){ print("bad") } }$
