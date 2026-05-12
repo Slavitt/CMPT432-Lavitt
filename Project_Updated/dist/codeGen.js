@@ -47,6 +47,7 @@ export class CodeGen {
         this.staticOffset = 0;
         this.errors = [];
         this.memError = false;
+        this.codeGenStepTracker = [];
         this.ast = ast;
         this.symbolTable = symbolTable;
     }
@@ -62,6 +63,7 @@ export class CodeGen {
             this.backpatch();
         }
         console.log(this.codeArr);
+        console.log(this.codeGenStepTracker);
         return this.codeArr.join(' ');
     }
     // -- Emit Helpers ----------------------------------------------------------
@@ -149,16 +151,17 @@ export class CodeGen {
     }
     // -- Block -----------------------------------------------------------------
     genBlock(node) {
-        console.log("genBlock()");
+        this.codeGenStepTracker.push("CODE GEN - Block (Scope Down)");
         this.openScope();
         for (const c of node.children) {
             this.visit(c);
         }
         this.closeScope();
+        this.codeGenStepTracker.push("CODE GEN - End Block (Scope Up)");
     }
     // -- VarDecl ---------------------------------------------------------------
     genVarDecl(node) {
-        console.log("genVarDecl()");
+        this.codeGenStepTracker.push("CODE GEN - Variable Declaration");
         const type = node.children[0].name;
         const varName = node.children[1].name;
         const scope = this.currentScope.name;
@@ -175,7 +178,7 @@ export class CodeGen {
     }
     // -- AssignmentStatement ---------------------------------------------------
     genAssignmentStatement(node) {
-        console.log("genAssignmentStatement()");
+        this.codeGenStepTracker.push("CODE GEN - Assignment");
         const idName = node.children[0].name;
         const entry = this.lookupStatic(idName, this.currentScope);
         if (node.children.length === 2) {
@@ -227,7 +230,7 @@ export class CodeGen {
     }
     // -- PrintStatement --------------------------------------------------------
     genPrintStatement(node) {
-        console.log("genPrintStatement()");
+        this.codeGenStepTracker.push("CODE GEN - Print Statement");
         if (node.children.length === 1) {
             const valNode = node.children[0];
             const valEntry = this.lookupStatic(valNode.name, this.currentScope);
@@ -281,6 +284,7 @@ export class CodeGen {
         }
         else {
             // Int expression: evaluate at compile time
+            this.codeGenStepTracker.push("CODE GEN - Addition");
             const result = this.evalIntExpr(node.children);
             this.emit("A0");
             this.emit(result.toString(16).toUpperCase().padStart(2, '0'));
@@ -291,7 +295,7 @@ export class CodeGen {
     }
     // -- If Statement ----------------------------------------------------------
     genIf(node) {
-        console.log("genIf()");
+        this.codeGenStepTracker.push("CODE GEN - If Statement");
         const isEqNode = node.children[0];
         const blockNode = node.children[1];
         const isNotEqual = isEqNode.name === "isNeq";
@@ -309,7 +313,7 @@ export class CodeGen {
     }
     // -- While Statement -------------------------------------------------------
     genWhile(node) {
-        console.log("genWhile()");
+        this.codeGenStepTracker.push("CODE GEN - While Statement");
         const isEqNode = node.children[0];
         const blockNode = node.children[1];
         const compStart = this.codePointer;
@@ -344,6 +348,7 @@ export class CodeGen {
     }
     // -- Comparison ------------------------------------------------------------
     genComparison(isEqNode, isNotEqual) {
+        this.codeGenStepTracker.push("CODE GEN - Equality");
         const left = isEqNode.children[0];
         const right = isEqNode.children[1];
         // const leftEntry  = this.lookupStatic(left.name, this.currentScope)!;
