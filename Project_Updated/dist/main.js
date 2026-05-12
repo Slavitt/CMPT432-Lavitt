@@ -90,7 +90,7 @@ function startCompilation() {
         }
         // SEMANTIC ANALYSIS ------------------------------------------------------------------------
         if (parseSuccess == true) {
-            output.value += "\n\nSEMANTIC - beginning semantic analysis... -------------";
+            output.value += "\n\nSEMANTIC - beginning semantic analysis... -------------\n";
             // create semantic analysis object and initialize success variable
             let _Sem = new Semantic(_Parser.cst);
             _Sem.startSem();

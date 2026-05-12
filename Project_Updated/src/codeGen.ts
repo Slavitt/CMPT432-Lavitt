@@ -337,14 +337,20 @@ export class CodeGen
                     this.emit("FF");
                 }
             }
-            else if (valNode.name === "true" || valNode.name === "false")
+            else if (valNode.name === "true") // CHANGED: split into two separate cases
             {
-                // Bool literal: print as string
-                const heapAddr = this.writeStringToHeap(valNode.name);
                 this.emit("A0");
-                this.emit(heapAddr.toString(16).toUpperCase().padStart(2, '0'));
+                this.emit("01");
                 this.emit("A2");
-                this.emit("02");
+                this.emit("01");
+                this.emit("FF");
+            }
+            else if (valNode.name === "false") // CHANGED: split into two separate cases
+            {
+                this.emit("A0");
+                this.emit("00");
+                this.emit("A2");
+                this.emit("01");
                 this.emit("FF");
             }
             else if (this.isStringLiteral(valNode.name))
