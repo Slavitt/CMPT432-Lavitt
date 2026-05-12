@@ -196,6 +196,14 @@ function startCompilation(): void
 				let _codeGen: CodeGen = new CodeGen(_Sem.ast, _Sem.symbolTable);
 				let machineCode = _codeGen.generateMachineCode();
 
+				if (verbose)
+				{
+					for (let i = 0; i < _codeGen.codeGenStepTracker.length; i++)
+					{
+						output.value += `\n${_codeGen.codeGenStepTracker[i]}`;
+					}
+				}
+
 				if (_codeGen.errors.length > 0)
 				{
 					for (let i = 0; i < _codeGen.errors.length; i++)
