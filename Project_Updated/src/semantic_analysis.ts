@@ -236,13 +236,12 @@ export class Semantic
 
         this.ast.addNode("branch", "while");
 
-        this.findExpr(n.children[1]);
+        this.findBooleanExpr(n.children[1]);
+
+        this.abstractBlock(n.children[2]);
 
         this.ast.moveUp();
 
-        this.abstractBlock(n.children[2]);  
-
-        this.ast.moveUp();
     }
 
     // Helper Functions for AST Generation

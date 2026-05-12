@@ -151,8 +151,7 @@ export class Semantic {
     abstractWhileStatement(n) {
         this.astStepTracer.push("AST - abstractWhileStatement()");
         this.ast.addNode("branch", "while");
-        this.findExpr(n.children[1]);
-        this.ast.moveUp();
+        this.findBooleanExpr(n.children[1]);
         this.abstractBlock(n.children[2]);
         this.ast.moveUp();
     }
@@ -260,7 +259,7 @@ export class Semantic {
         }
     }
     symbolVisitBlock(node) {
-        this.symbolTable.stepTracer.push("SYMBOL TABLE - visitBlock()");
+        this.symbolTable.stepTracer.push("SYMBOL TABLE: Block - Scope/Type Check");
         this.symbolTable.openScope();
         for (const c of node.children) {
             this.symbolVisit(c);
@@ -268,7 +267,7 @@ export class Semantic {
         this.symbolTable.closeScope();
     }
     symbolVisitVarDecl(node) {
-        this.symbolTable.stepTracer.push("SYMBOL TABLE - visitVarDecl()");
+        this.symbolTable.stepTracer.push("SYMBOL TABLE: VarDecl - Scope/Type Check");
         const type = node.children[0].name;
         const id = node.children[1].name;
         if (this.symbolTable.current.lookup(id) !== null) {
@@ -278,7 +277,7 @@ export class Semantic {
         this.symbolTable.current.addEntry(id, type);
     }
     symbolVisitAssignmentStatement(node) {
-        this.symbolTable.stepTracer.push("SYMBOL TABLE - visitAssignmentStatement()");
+        this.symbolTable.stepTracer.push("SYMBOL TABLE: Assignment - Scope/Type Check");
         const id = node.children[0].name;
         const entry = this.symbolTable.current.lookupAll(id);
         if (entry === null) {
@@ -306,7 +305,7 @@ export class Semantic {
         entry.isInitialized = true;
     }
     symbolVisitPrintStatement(node) {
-        this.symbolTable.stepTracer.push("SYMBOL TABLE - visitPrintStatement()");
+        this.symbolTable.stepTracer.push("SYMBOL TABLE: Print - Scope/Type Check");
         const valueNode = node.children[0];
         const entry = this.symbolTable.current.lookupAll(valueNode.name);
         if (entry !== null) {
@@ -321,12 +320,13 @@ export class Semantic {
         }
     }
     symbolVisitIfWhile(node) {
+        this.symbolTable.stepTracer.push("SYMBOL TABLE: If/While - Scope/Type Check");
         for (const c of node.children) {
             this.symbolVisit(c);
         }
     }
     symbolVisitIsEq(node) {
-        this.symbolTable.stepTracer.push("SYMBOL TABLE - visitIsEq()");
+        this.symbolTable.stepTracer.push("SYMBOL TABLE: Check Type Equivalence");
         const types = [];
         for (const c of node.children) {
             if (c.name === "isEq" || c.name === "isNeq") {
