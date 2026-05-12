@@ -55,6 +55,7 @@ export class CodeGen
     errors: string[] = [];
     memError: boolean = false;
     codeGenStepTracker: string[] = [];
+    heapStrings: {str: string, addr: number}[] = [];
 
     constructor(ast: AST, symbolTable: SymbolTable)
     {
@@ -496,12 +497,20 @@ export class CodeGen
 
     private writeStringToHeap(str: string): number
     {
-        // Write null terminator first
+        // Strip the quotes from the string
+        let str2 = str.replace(/"/g, '');
+
+        // Check if string already exists in heap
+        const existing = this.heapStrings.find(e => e.str === str2);
+        if (existing !== undefined) 
+        { 
+            return existing.addr; 
+        }
+
+        // Write null terminator if the string isn't in the heap
         this.codeArr[this.heapPointer] = "00";
         this.heapPointer--;
 
-        // Strip the quotes from the string
-        let str2 = str.replace(/"/g, '');
 
         // Write characters in reverse
         for (let i = str2.length - 1; i >= 0; i--)
@@ -510,8 +519,9 @@ export class CodeGen
             this.heapPointer--;
         }
 
-        // Return address of first character
-        return this.heapPointer + 1;
+        const addr = this.heapPointer + 1;
+        this.heapStrings.push({ str: str2, addr });
+        return addr;
     }
 
     private isStringLiteral(val: string): boolean
@@ -545,7 +555,7 @@ export class CodeGen
                 const entry = this.staticTable.find(e => e.tempLabel === tempLabel);
                 if (entry)
                 {
-                    const actualAddr = codeLength + entry.offset + 1;
+                    const actualAddr = codeLength + entry.offset;
                     return actualAddr.toString(16).toUpperCase().padStart(2, '0');
                 }
             }

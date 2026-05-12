@@ -48,6 +48,7 @@ export class CodeGen {
         this.errors = [];
         this.memError = false;
         this.codeGenStepTracker = [];
+        this.heapStrings = [];
         this.ast = ast;
         this.symbolTable = symbolTable;
     }
@@ -380,18 +381,24 @@ export class CodeGen {
     }
     // -- Heap Helpers ----------------------------------------------------------
     writeStringToHeap(str) {
-        // Write null terminator first
-        this.codeArr[this.heapPointer] = "00";
-        this.heapPointer--;
         // Strip the quotes from the string
         let str2 = str.replace(/"/g, '');
+        // Check if string already exists in heap
+        const existing = this.heapStrings.find(e => e.str === str2);
+        if (existing !== undefined) {
+            return existing.addr;
+        }
+        // Write null terminator if the string isn't in the heap
+        this.codeArr[this.heapPointer] = "00";
+        this.heapPointer--;
         // Write characters in reverse
         for (let i = str2.length - 1; i >= 0; i--) {
             this.codeArr[this.heapPointer] = str2.charCodeAt(i).toString(16).toUpperCase().padStart(2, '0');
             this.heapPointer--;
         }
-        // Return address of first character
-        return this.heapPointer + 1;
+        const addr = this.heapPointer + 1;
+        this.heapStrings.push({ str: str2, addr });
+        return addr;
     }
     isStringLiteral(val) {
         return isNaN(Number(val)) && val !== "true" && val !== "false";
@@ -412,7 +419,7 @@ export class CodeGen {
                 const tempLabel = byte.slice(0, -2);
                 const entry = this.staticTable.find(e => e.tempLabel === tempLabel);
                 if (entry) {
-                    const actualAddr = codeLength + entry.offset + 1;
+                    const actualAddr = codeLength + entry.offset;
                     return actualAddr.toString(16).toUpperCase().padStart(2, '0');
                 }
             }
