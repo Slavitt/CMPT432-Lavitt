@@ -111,7 +111,12 @@ function startCompilation() {
             }
             else // if there are no errors, proceed to code gen!
              {
-                output.value += "\n\nSEMANTIC - success\n";
+                if (_Sem.symbolTable.warnings.length > 0) {
+                    for (let i = 0; i < _Sem.symbolTable.warnings.length; i++) {
+                        output.value += `\n${_Sem.symbolTable.warnings[i]}`;
+                    }
+                }
+                output.value += `\n\nSEMANTIC - semantic analysis successful with ${_Sem.symbolTable.errors.length} errors detected\n`;
                 semanticSuccess = true;
                 output.value += "\nABSTRACT SYNTAX TREE\n" + _Sem.ast.printTree();
                 if (verbose) {
