@@ -94,7 +94,7 @@ export class SymbolTable
     {
         if (this.current !== null)
         {
-            this.stepTracer.push(`SYMBOL TABLE - Scope ${this.current.name} closed`);
+            // this.stepTracer.push(`SYMBOL TABLE - Scope ${this.current.name} closed`);
             this.current = this.current.parent;
         }
     }
