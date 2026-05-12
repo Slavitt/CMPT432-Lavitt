@@ -14,6 +14,9 @@ function startCompilation() {
         output.value = "";
     }
     // Split the input string into programs
+    if (!message.endsWith("$")) {
+        message = message.trim() + "$";
+    }
     let programs = message.split("$");
     console.log(programs);
     for (let i = 0; i < programs.length; i++) {
@@ -58,6 +61,7 @@ function startCompilation() {
             output.value += `\nLEXER - lex successful with ${_Lexer.errorStream.length} errors and ${_Lexer.warningStream.length} warnings`;
             lexSuccess = true;
         }
+        console.log(tokenStream);
         // PARSE ------------------------------------------------------------------------------------
         let _Parser = new Parser();
         if (lexSuccess == true) {
@@ -124,6 +128,11 @@ function startCompilation() {
                 console.log("call me brian gormanly the way i 65 this 02");
                 let _codeGen = new CodeGen(_Sem.ast, _Sem.symbolTable);
                 let machineCode = _codeGen.generateMachineCode();
+                if (verbose) {
+                    for (let i = 0; i < _codeGen.codeGenStepTracker.length; i++) {
+                        output.value += `\n${_codeGen.codeGenStepTracker[i]}`;
+                    }
+                }
                 if (_codeGen.errors.length > 0) {
                     for (let i = 0; i < _codeGen.errors.length; i++) {
                         output.value += `\n${_codeGen.errors[i]}`;

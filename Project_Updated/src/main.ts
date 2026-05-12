@@ -22,6 +22,11 @@ function startCompilation(): void
 	}
 
 	// Split the input string into programs
+	if (!message.endsWith("$"))
+	{
+		message = message.trim() + "$";
+	}
+
 	let programs: string[] = message.split("$");
 	console.log(programs);
 
@@ -88,7 +93,7 @@ function startCompilation(): void
 			lexSuccess = true;
 		}
 
-
+		console.log(tokenStream);
 		// PARSE ------------------------------------------------------------------------------------
 		let _Parser = new Parser();
 
