@@ -158,9 +158,9 @@ export class Parser {
         this.cstStepTracer.push("PARSE - parseWhileStatement()");
         this.cst.addNode("branch", "WhileStatement");
         this.match(["while"]);
-        this.match(["("]);
+        // this.match(["("]);
         this.parseBooleanExpr();
-        this.match([")"]);
+        // this.match([")"]);
         this.parseBlock();
         this.cst.moveUp();
     }
@@ -169,9 +169,9 @@ export class Parser {
         this.cstStepTracer.push("PARSE - parseIfStatement()");
         this.cst.addNode("branch", "IfStatement");
         this.match(["if"]);
-        this.match(["("]);
+        // this.match(["("]);
         this.parseBooleanExpr();
-        this.match([")"]);
+        // this.match([")"]);
         this.parseBlock();
         this.cst.moveUp();
     }
