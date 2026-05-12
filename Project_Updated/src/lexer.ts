@@ -76,6 +76,7 @@ export class Lexer
                         // this.generateToken("*/");
                         this.advance();
                         this.advance();
+                        continue;
                     }
 
                     // Ignores new lines found inside the comment, but prints to the
